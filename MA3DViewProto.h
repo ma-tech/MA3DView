@@ -151,28 +151,6 @@ extern void referenceFileListCb(
   Widget	w,
   XtPointer	client_data,
   XtPointer	call_data);
-extern void WlzXmFileListItemFree(
-  void	*entry);
-extern AlcDLPList *WlzXmFileListCreateList(
-  String	resourceFile,
-  WlzErrorNum	*dstErr);
-extern MenuItem *WlzXmFileListCreateMenuItems(
-  AlcDLPList	*fileList,
-  XtCallbackProc	callbackProc,
-  WlzErrorNum	*dstErr);
-extern WlzErrorNum WlzXmFileListAddFile(
-  AlcDLPList	*fileList,
-  String	file,
-  WlzEffFormat	format);
-extern void WlzXmFileListWriteHeader(
-  FILE	*fp);
-extern WlzErrorNum WlzXmFileListWriteResourceFile(
-  AlcDLPList	*fileList,
-  String	resourceFile);
-extern WlzObject *WlzXmFileListReadObject(
-  Widget			w,
-  WlzXmFileListCallbackStruct	*cbs,
-  WlzErrorNum			*dstErr);
 
 /* MAColormapUtils.c */
 extern void HGU_XmCreatePrivateColormap(Widget w);

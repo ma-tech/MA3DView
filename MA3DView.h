@@ -28,7 +28,6 @@
 
 #include <Wlz.h>
 #include <WlzExtFF.h>
-#include <WlzXm.h>
 
 #include <GL/gl.h>
 #include <GL/glu.h>
@@ -41,7 +40,6 @@
 
 #include <HGU_XmUtils.h>
 #include <HGU_XInteract.h>
-#include <WlzXm.h>
 
 #include <MA3DViewTypes.h>
 #include <MA3DViewProto.h>
