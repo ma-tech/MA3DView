@@ -195,7 +195,7 @@ LIBDIRS			= \
 			../../HGUX/libHguXm \
 			../../HGUX/libhguGL \
 			../../External/Tiff/tiff-v3.5.7/libtiff \
-			/Users/richard/Desktop/darwin-extras/langinfo \
+			/Users/richard/downloads/darwin-extras/langinfo \
 			$(HGU_LIB_DIR) \
 			$(OPENGL_LIB_DIR) \
 			$(X11_LIB_DIR) \
@@ -256,7 +256,6 @@ ifeq 		($(UNIXTYPE), SUNOS5)
 #CDEBUG			= -g
 #COPTIMISE		= -xcg92
 endif
-LDFLAGS			= $(LIBDIRS:%=-L%)
 ifeq 		($(UNIXTYPE), SUNOS5)
 LDFLAGS			= $(LIBDIRS:%=-L%) -R$(SYSLIB):$(HGU_LIB_DIR):$(OPENGL_LIB_DIR):$(X11_LIB_DIR):$(MOTIF_LIB_DIR)
 endif

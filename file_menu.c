@@ -384,19 +384,25 @@ void install_reference_object(
     WlzFreeObj(globals.obj);
   }
   globals.obj = WlzAssignObject(obj, NULL);
+fprintf(stderr, "Object read and assigned\n");
 
   /* reset the histogram */
   resetGreyRange();
+fprintf(stderr, "Reset grey-range\n");
 
   /* reset the lut transform */
   resetImageControlValues();
+fprintf(stderr, "Reset control values\n");
   setLutTransform();
+fprintf(stderr, "Set lut transform\n");
   if( globals.imageDialog ){
     setImageControls();
   }
+fprintf(stderr, "Set image controls\n");
 
   /* reset view to x-y */
   setViewSelection("x-y");
+fprintf(stderr, "setViewSelection\n");
 
   return;
 }
