@@ -90,6 +90,7 @@ INCDIRS			= .  \
 			../../HGUX/libHguXm \
 			../../HGUX/libhguGL \
 			../../External/Tiff/tiff-v3.5.7/libtiff \
+			../../External/Jpeg/jpeg-6b \
 			  $(HGU_INC_DIR) \
 			  $(OPENGL_INC_DIR) \
 			  $(X11_INC_DIR) \
