@@ -106,7 +106,7 @@ XImage *HGU_XmObjToXImage(
   int			i, j;
 
   /* get window properties */
-  if( XGetWindowAttributes(XtDisplay(w), XtWindow(w), &win_att) == 0 ){
+  if( XGetWindowAttributes(XtDisplayOfObject(w), XtWindowOfObject(w), &win_att) == 0 ){
     return rtnImage;
   }
 
@@ -296,6 +296,7 @@ void setViewCb(
     return;
   }
 
+  XSync(globals.dpy, False);
   /* re-initialise the view structure */
   if( globals.wlzViewStr == NULL ){
     globals.wlzViewStr = WlzMake3DViewStruct(WLZ_3D_VIEW_STRUCT, NULL);
@@ -349,6 +350,7 @@ void setViewCb(
 		XmNwidth, widthp,
 		XmNheight, heightp,
 		NULL);
+  XSync(globals.dpy, False);
 
   /* reset the ximage */
   if(globals.ximage){
@@ -635,7 +637,8 @@ void canvasExposeCb(
   XWindowAttributes	win_att;
 
   /* check if there is a reference object */
-  if((globals.obj == NULL) || (globals.view_object == NULL) ){
+  if((globals.obj == NULL) || (globals.view_object == NULL) ||
+     (globals.ximage == NULL)){
     return;
   }
 
@@ -862,7 +865,7 @@ void distanceCb(
     globals.ximage = NULL;    
   }
 
-  globals.ximage = HGU_XmObjToXImage(w, obj);
+  globals.ximage = HGU_XmObjToXImage(globals.canvas, obj);
 
   /* clear domain boundaries */
   clearDomainBoundaries();
@@ -1039,8 +1042,10 @@ Widget	main_w)
 			    NULL);
 
   canvas = XtVaCreateManagedWidget("canvas",
-				   hgu_DrawingAreaWidgetClass,
+				   xmDrawingAreaWidgetClass,
 				   scrolled_window,
+				   XmNheight, 512,
+				   XmNwidth, 512,
 				   NULL);
 
   globals.canvas = canvas;

@@ -13,7 +13,7 @@
 *   Author Name :  Richard Baldock					*
 *   Author Login:  richard@hgu.mrc.ac.uk				*
 *   Date        :  Fri Oct 19 14:23:42 2001				*
-*   $Revision$								*
+*   $Revision$					      		*
 *   $Name$								*
 *   Synopsis    : 							*
 *************************************************************************
@@ -90,7 +90,10 @@ void HGU_XmSetHourGlassCursor(
 {
   static Cursor	cursor;
 
-#ifndef __ppc
+  if( !XtIsRealized(w) ){
+    return;
+  }
+
   /* create the cursor */
   if( !cursor ){
     cursor = XCreateFontCursor( XtDisplayOfObject(w), XC_watch );
@@ -116,7 +119,7 @@ void HGU_XmSetHourGlassCursor(
     }
   }
   XFlush(XtDisplayOfObject(w));
-#endif /* __ppc */
+
   return;
 }
 
@@ -124,6 +127,11 @@ void HGU_XmUnsetHourGlassCursor(
   Widget	w)
 {
   XEvent	event;
+
+  if( !XtIsRealized(w) ){
+    return;
+  }
+
 #ifndef __ppc
   /* if a shell widget, unset the cursor */
   if( XtIsShell( w ) ){
