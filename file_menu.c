@@ -464,7 +464,8 @@ XtPointer	call_data)
   HGU_XmSetHourGlassCursor(globals.topl);
 
   /* read the new reference object */
-  obj = WlzAssignObject(WlzEffReadObj(fp, icsfile, image_type, NULL), NULL);
+  obj = WlzAssignObject(WlzEffReadObj(fp, icsfile, image_type, 0, NULL),
+			NULL);
 
   /* close the file pointer if non NULL */
   if( fp )
