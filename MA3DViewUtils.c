@@ -90,6 +90,7 @@ void HGU_XmSetHourGlassCursor(
 {
   static Cursor	cursor;
 
+#ifndef __ppc
   /* create the cursor */
   if( !cursor ){
     cursor = XCreateFontCursor( XtDisplayOfObject(w), XC_watch );
@@ -115,7 +116,7 @@ void HGU_XmSetHourGlassCursor(
     }
   }
   XFlush(XtDisplayOfObject(w));
-
+#endif /* __ppc */
   return;
 }
 
@@ -123,7 +124,7 @@ void HGU_XmUnsetHourGlassCursor(
   Widget	w)
 {
   XEvent	event;
-
+#ifndef __ppc
   /* if a shell widget, unset the cursor */
   if( XtIsShell( w ) ){
     XUndefineCursor(XtDisplay(w), XtWindow(w));
@@ -153,7 +154,7 @@ void HGU_XmUnsetHourGlassCursor(
   {
     /* do nothing */
   }
-
+#endif /* __ppc */
   return;
 }
 

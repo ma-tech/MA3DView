@@ -106,11 +106,6 @@ XImage *HGU_XmObjToXImage(
   int			i, j;
 
   /* get window properties */
-fprintf(stderr, "ObjToXImage 0\n");
-(void) XtDisplay(w);
-fprintf(stderr, "ObjToXImage 0\n");
-(void) XtWindow(w);
-fprintf(stderr, "ObjToXImage 0\n");
   if( XGetWindowAttributes(XtDisplay(w), XtWindow(w), &win_att) == 0 ){
     return rtnImage;
   }
@@ -125,14 +120,12 @@ fprintf(stderr, "ObjToXImage 0\n");
   if( !obj->domain.core || !obj->values.core ){
     return rtnImage;
   }
-fprintf(stderr, "ObjToXImage 1\n");
   /* allocate space for the data */
   width = obj->domain.i->lastkl - obj->domain.i->kol1 + 1;
   height = obj->domain.i->lastln - obj->domain.i->line1 + 1;
   if( gVWSp = WlzGreyValueMakeWSp(obj, &errNum) ){
     if( data = (UBYTE *) AlcMalloc(((win_att.depth == 8)?1:4)
 				   *width*height*sizeof(char)) ){
-fprintf(stderr, "ObjToXImage 2\n");
       dst_data = data;
       /* fill in the values */
       for(j=0; j < height; j++){
@@ -170,7 +163,6 @@ fprintf(stderr, "ObjToXImage 2\n");
       errNum = WLZ_ERR_MEM_ALLOC;
     }
     WlzGreyValueFreeWSp(gVWSp);
-fprintf(stderr, "ObjToXImage 3\n");
   }
 
   if( errNum == WLZ_ERR_NONE ){
@@ -180,7 +172,6 @@ fprintf(stderr, "ObjToXImage 3\n");
 			    width, height, 8, 0);
   }
 
-fprintf(stderr, "ObjToXImage 4\n");
   return rtnImage;
 }
 
@@ -274,12 +265,13 @@ void setViewSelection(
   XtVaSetValues(toggle, XmNset, True, NULL);
   XtVaSetValues(mode_rc, XmNmenuHistory, toggle, NULL);
 
+
   /* call callbacks */
   cbs.reason = XmCR_VALUE_CHANGED;
   cbs.event = NULL;
   cbs.set = True;
-fprintf(stderr, "setViewSelection: calling callbacks\n");
   XtCallCallbacks(toggle, XmNvalueChangedCallback, &cbs);
+
 
   return;
 }
@@ -335,17 +327,13 @@ void setViewCb(
     wlzViewStr->phi = WLZ_M_PI/4;
     break;
   }
-fprintf(stderr, "setViewCb: initialise view struct\n");
   WlzInit3DViewStruct(wlzViewStr, globals.obj);
   new_dist = (wlzViewStr->minvals.vtZ + wlzViewStr->maxvals.vtZ) / 2.0;
   Wlz3DSectionIncrementDistance(wlzViewStr, new_dist);
   wlzViewStr->dist = new_dist;
-
   /* set the distance slider */
-fprintf(stderr, "setViewCb: set slider range\n");
   HGU_XmSetSliderRange(globals.distSlider, wlzViewStr->minvals.vtZ,
 		       wlzViewStr->maxvals.vtZ);
-fprintf(stderr, "setViewCb: set slider value\n");
   HGU_XmSetSliderValue(globals.distSlider, wlzViewStr->dist);
 
   /* re-size the canvas */
@@ -370,7 +358,6 @@ fprintf(stderr, "setViewCb: set slider value\n");
   clearDomainBoundaries();
   
   /* call callbacks */
-fprintf(stderr, "setViewCb: distanceCb\n");
   distanceCb(globals.distSlider, NULL, NULL);
   
   return;
@@ -837,7 +824,6 @@ void distanceCb(
       return;
     }
   }
-fprintf(stderr, "distanceCb: increment distance\n");
   new_dist = HGU_XmGetSliderValue( slider );
   Wlz3DSectionIncrementDistance(globals.wlzViewStr,
 				(new_dist - globals.wlzViewStr->dist));
@@ -848,7 +834,6 @@ fprintf(stderr, "distanceCb: increment distance\n");
     WlzFreeObj(globals.view_object);
     globals.view_object = NULL;
   }
-fprintf(stderr, "distanceCb: get section\n");
   obj = WlzGetSectionFromObject(globals.obj, globals.wlzViewStr,
 				&errNum);
   if( errNum == WLZ_ERR_NONE ){
@@ -866,15 +851,13 @@ fprintf(stderr, "distanceCb: get section\n");
     XDestroyImage(globals.ximage);
     globals.ximage = NULL;    
   }
-fprintf(stderr, "distanceCb: build Ximage\n");
+
   globals.ximage = HGU_XmObjToXImage(w, obj);
 
   /* clear domain boundaries */
-fprintf(stderr, "distanceCb: clearDomainBoundaries\n");
   clearDomainBoundaries();
   
   /* calculate the expose event and call expose callback */
-fprintf(stderr, "distanceCb: canvasExposeCb\n");
   canvasExposeCb(globals.canvas, NULL, NULL);
 
   return;
