@@ -296,7 +296,6 @@ void setViewCb(
     return;
   }
 
-  XSync(globals.dpy, False);
   /* re-initialise the view structure */
   if( globals.wlzViewStr == NULL ){
     globals.wlzViewStr = WlzMake3DViewStruct(WLZ_3D_VIEW_STRUCT, NULL);
@@ -350,7 +349,6 @@ void setViewCb(
 		XmNwidth, widthp,
 		XmNheight, heightp,
 		NULL);
-  XSync(globals.dpy, False);
 
   /* reset the ximage */
   if(globals.ximage){

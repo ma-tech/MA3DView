@@ -843,11 +843,8 @@ void read_reference_object_cb(
   Widget	cascade;
   WlzErrorNum		errNum=WLZ_ERR_NONE;
 
-  XSync(globals.dpy, False);
-
   /* set hour glass cursor */
   HGU_XmSetHourGlassCursor(globals.topl);
-  XSync(globals.dpy, False);
 
   /* read the new reference object */
   obj = WlzAssignObject(WlzXmReadExtFFObject(read_reference_dialog, cbs,

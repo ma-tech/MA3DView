@@ -132,7 +132,6 @@ void HGU_XmUnsetHourGlassCursor(
     return;
   }
 
-#ifndef __ppc
   /* if a shell widget, unset the cursor */
   if( XtIsShell( w ) ){
     XUndefineCursor(XtDisplay(w), XtWindow(w));
@@ -162,7 +161,7 @@ void HGU_XmUnsetHourGlassCursor(
   {
     /* do nothing */
   }
-#endif /* __ppc */
+
   return;
 }
 
