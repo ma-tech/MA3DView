@@ -17,6 +17,11 @@ include			../../Makefile.conf
 OPENGLHOME		= /opt/Mesa
 OPENGL_INC_DIR          = $(OPENGLHOME)/include
 OPENGL_LIB_DIR		= $(OPENGLHOME)/lib
+ifeq ($(UNIXTYPE), DARWIN)
+OPENGLHOME		= /usr/X11R6
+OPENGL_INC_DIR          = $(OPENGLHOME)/include
+OPENGL_LIB_DIR		= $(OPENGLHOME)/lib
+endif
 ifeq ($(UNIXTYPE), IRIX5)
 OPENGL_LIB_DIR		= $(OPENGLHOME)/lib.32
 endif
@@ -80,17 +85,33 @@ INCDIRS			= .  \
 			../../Core/libAlg \
 			../../Core/libWlz \
 			../../Core/libWlzExtFF \
-			../../Core/libReconstruct \
 			../../Core/libhguDlpList \
 			../../HGUX/libHguX \
 			../../HGUX/libHguXm \
 			../../HGUX/libhguGL \
-			../../External/Tiff/libtiff \
+			../../External/Tiff/tiff-v3.5.7/libtiff \
 			  $(HGU_INC_DIR) \
 			  $(OPENGL_INC_DIR) \
 			  $(X11_INC_DIR) \
 			  $(MOTIF_INC_DIR) \
 			/opt/local/include
+ifeq ($(UNIXTYPE), DARWIN)
+INCDIRS			= .  \
+			../../Core/libAlc \
+			../../Core/libbibfile \
+			../../Core/libAlg \
+			../../Core/libWlz \
+			../../Core/libWlzExtFF \
+			../../Core/libhguDlpList \
+			../../HGUX/libHguX \
+			../../HGUX/libHguXm \
+			../../HGUX/libhguGL \
+			../../External/Tiff/tiff-v3.5.7/libtiff \
+			  $(HGU_INC_DIR) \
+			  $(OPENGL_INC_DIR) \
+			  $(X11_INC_DIR) \
+			  $(MOTIF_INC_DIR)
+endif
 
 # List of library search paths (modify as required).
 ifeq ($(UNIXTYPE), IRIX5)
@@ -100,7 +121,6 @@ LIBDIRS			= \
 			../../Core/libAlg \
 			../../Core/libWlz \
 			../../Core/libWlzExtFF \
-			../../Core/libReconstruct \
 			../../Core/libhguDlpList \
 			../../HGUX/libHguX \
 			../../HGUX/libHguXm \
@@ -118,13 +138,14 @@ LIBDIRS			= \
 			../../Core/libAlg \
 			../../Core/libWlz \
 			../../Core/libWlzExtFF \
-			../../Core/libReconstruct \
 			../../Core/libhguDlpList \
 			../../HGUX/libHguX \
 			../../HGUX/libHguXm \
 			../../HGUX/libhguGL \
+			../../External/Tiff/tiff-v3.5.7/libtiff \
 			$(HGU_LIB_DIR) \
 			$(OPENGL_LIB_DIR) \
+			$(MOTIF_LIB_DIR) \
 			$(X11_LIB_DIR) \
 			$(MOTIF_LIB_DIR) \
 			/opt/local/lib
@@ -136,7 +157,6 @@ LIBDIRS			= \
 			../../Core/libAlg \
 			../../Core/libWlz \
 			../../Core/libWlzExtFF \
-			../../Core/libReconstruct \
 			../../Core/libhguDlpList \
 			../../HGUX/libHguX \
 			../../HGUX/libHguXm \
@@ -153,7 +173,6 @@ LIBDIRS			= \
 			../../Core/libAlg \
 			../../Core/libWlz \
 			../../Core/libWlzExtFF \
-			../../Core/libReconstruct \
 			../../Core/libhguDlpList \
 			../../HGUX/libHguX \
 			../../HGUX/libHguXm \
@@ -161,6 +180,26 @@ LIBDIRS			= \
 			$(OPENGL_LIB_DIR) \
 			$(SYSLIB) \
 			$(HGU_LIB_DIR) \
+			/opt/local/lib
+endif
+ifeq ($(UNIXTYPE), DARWIN)
+LIBDIRS			= \
+			$(SYSLIB) \
+			../../Core/libAlc \
+			../../Core/libbibfile \
+			../../Core/libAlg \
+			../../Core/libWlz \
+			../../Core/libWlzExtFF \
+			../../Core/libhguDlpList \
+			../../HGUX/libHguX \
+			../../HGUX/libHguXm \
+			../../HGUX/libhguGL \
+			../../External/Tiff/tiff-v3.5.7/libtiff \
+			/Users/richard/Desktop/darwin-extras/langinfo \
+			$(HGU_LIB_DIR) \
+			$(OPENGL_LIB_DIR) \
+			$(X11_LIB_DIR) \
+			$(MOTIF_LIB_DIR) \
 			/opt/local/lib
 endif
 
@@ -187,18 +226,22 @@ ifeq 		($(UNIXTYPE), SUNOS5)
 EXTRA_LIBS		= tiff m gen socket nsl
 X11LIBS         	= Xt Xmu X11  Xi Xext
 else
-EXTRA_LIBS		= tiff m gen
+EXTRA_LIBS		= tiff m gen 
 X11LIBS         	= Xt Xmu X11 Xext
 endif
 ifeq	 	($(UNIXTYPE), LINUX2)
 EXTRA_LIBS		= tiff m Xp SM ICE
 X11LIBS         	= Xt Xmu X11 Xext
 endif
+ifeq	 	($(UNIXTYPE), DARWIN)
+EXTRA_LIBS		= langinfo tiff m
+X11LIBS         	= Xt Xmu X11 Xp Xext
+endif
 
 OPENGLLIBS		= GLU GL
 MOTIFLIBS       	= Xm
-LOCALLIBS		= hguGL HguXm HguX WlzExtFF Wlz Reconstruct hguDlpList bibfile Alg Alc
-LIBRARIES		= hguGL HguXm HguX Wlz Reconstruct hguDlpList bibfile Alg Alc \
+LOCALLIBS		= hguGL HguXm HguX WlzExtFF Wlz hguDlpList bibfile Alg Alc
+LIBRARIES		= hguGL HguXm HguX Wlz hguDlpList bibfile Alg Alc \
 			$(OPENGLLIBS) $(MOTIFLIBS) $(X11LIBS) $(EXTRA_LIBS)
 
 # Basic flags for controlling compilation (modify as required).
