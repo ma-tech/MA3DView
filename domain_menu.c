@@ -203,7 +203,7 @@ void displayDomains(void)
       /* get the section thought the domain */
       if( newItem->obj ){
 	if( obj1 = WlzGetSectionFromObject(newItem->obj, globals.wlzViewStr,
-					   WLZ_INTERPOLATION_NEAREST,
+					   WLZ_INTERPOLATION_LINEAR,
 					   &errNum) ){
 	  WlzObject	*tmpBoundary;
 
