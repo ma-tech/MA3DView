@@ -223,18 +223,18 @@ OBJECTS			= $(CSOURCES:%.c=%.o)
 
 # List of libraries to link (modify as required).
 ifeq 		($(UNIXTYPE), SUNOS5)
-EXTRA_LIBS		= tiff m gen socket nsl
+EXTRA_LIBS		= tiff jpeg m gen socket nsl
 X11LIBS         	= Xt Xmu X11  Xi Xext
 else
-EXTRA_LIBS		= tiff m gen 
+EXTRA_LIBS		= tiff jpeg m gen 
 X11LIBS         	= Xt Xmu X11 Xext
 endif
 ifeq	 	($(UNIXTYPE), LINUX2)
-EXTRA_LIBS		= tiff m Xp SM ICE
+EXTRA_LIBS		= tiff jpeg m Xp SM ICE
 X11LIBS         	= Xt Xmu X11 Xext
 endif
 ifeq	 	($(UNIXTYPE), DARWIN)
-EXTRA_LIBS		= langinfo tiff m
+EXTRA_LIBS		= langinfo tiff jpeg m
 X11LIBS         	= Xt Xmu X11 Xp Xext
 endif
 
