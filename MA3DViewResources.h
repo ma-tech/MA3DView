@@ -33,7 +33,7 @@ static String  fallback_resources[] = {
   /* fonts and backgrounds */
   "MA3DView*background:			grey85",
   "MA3DView*XmScrollBar.background:		grey95",
-  "MA3DView*.fontList:	      -linotype-helvetica-bold-r-*-*-12-*-*-*-*-*-*-*",
+  "MA3DView*.fontList:	      -*-helvetica-bold-r-*-*-12-*-*-*-*-*-*-*",
   "MA3DView*.XmText.fontList:		8x13",
   "MA3DView*.XmTextField.fontList:		8x13",
   "MA3DView*.XmList.fontList:		8x13",

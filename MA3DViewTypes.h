@@ -55,6 +55,8 @@ typedef struct _3DViewGlobals{
   char			*file;
   WlzObject		*obj;
   WlzObject		*obj2D;
+  String		resourceFile;
+  AlcDLPList		*fileList;
   
   /* image controls globals */
   WlzObject		*objHistogram;

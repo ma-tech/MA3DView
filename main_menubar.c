@@ -13,7 +13,7 @@
 *   Author Name :  Richard Baldock					*
 *   Author Login:  richard@hgu.mrc.ac.uk				*
 *   Date        :  Fri Oct 19 14:25:24 2001				*
-*   $Revision$								*
+*   $Revision$					       		*
 *   $Name$								*
 *   Synopsis    : 							*
 *************************************************************************
@@ -45,6 +45,8 @@ Widget create_main_menubar(
 Widget	main_w)
 {
     Widget	menubar, menu, widget;
+    MenuItem	item;
+    int		i;
 
     menubar = XmCreateMenuBar(main_w, "menubar", NULL, 0 );
 

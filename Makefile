@@ -51,7 +51,8 @@ CSOURCES		= \
 			MA3DViewCropImage.c \
 			MA3DViewUtils.c \
 			MAOpenGLUtils.c \
-			MAFilterImage.c
+			MAFilterImage.c \
+			WlzXmExtFF_FSBUtils.c 
 
 # List of all header files that are available outside of either this archive
 # or these executables (modify as required).
@@ -63,7 +64,8 @@ INCLUDES_PRV		= \
 			MA3DView.h \
 			MA3DViewTypes.h \
 			MA3DViewProto.h \
-			MA3DViewHelp.h
+			MA3DViewHelp.h \
+			WlzXm.h
 
 # List of all troff sources for manual pages, these should have the appropriate
 # extension (eg cat.1) (modify as required).

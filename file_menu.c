@@ -25,112 +25,424 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <string.h>
+#include <time.h>
 
 #include <MA3DView.h>
 
-static void image_type_cb(
-  Widget	w,
-  XtPointer	client_data,
-  XtPointer	call_data);
+/* general procedures and structures for managing a file list
+   and file-list menu items as in "recent"
+*/
 
-static void write_image_type_cb(
-  Widget	w,
-  XtPointer	client_data,
-  XtPointer	call_data);
+#define WLZXMFILELIST_MAXNUMITEMS 15
+void WlzXmFileListItemFree(
+  void	*entry)
+{
+  WlzXmFileListCallbackStruct	*cbs;
+
+  if( entry ){
+    cbs = (WlzXmFileListCallbackStruct *) entry;
+    if( cbs->file ){
+      AlcFree(cbs->file);
+    }
+    AlcFree(cbs);
+  }
+  return;
+}
+
+WlzErrorNum WlzXmFileListClearList(
+  AlcDLPList	*fileList)
+{
+  AlcDLPItem	*item;
+  WlzErrorNum	errNum=WLZ_ERR_NONE;
+
+  if( fileList ){
+    item = fileList->head;
+    while( item ){
+      item = AlcDLPItemUnlink(fileList, item, 1, NULL);
+    }
+  }
+  else {
+    errNum = WLZ_ERR_PARAM_NULL;
+  }
+
+  return errNum;
+}
+
+AlcDLPList *WlzXmFileListCreateList(
+  String	resourceFile,
+  WlzErrorNum	*dstErr)
+{
+  AlcDLPList	*list=NULL;
+  FILE		*fp;
+  WlzXmFileListCallbackStruct	*cbs;
+  int		index;
+  WlzErrorNum	errNum=WLZ_ERR_NONE;
+  AlcErrno	alcErrno;
+
+  /* check input parameters */
+  if( resourceFile == NULL ){
+    errNum = WLZ_ERR_PARAM_NULL;
+  }
+
+  /* create list */
+  list = AlcDLPListNew(&alcErrno);
+
+  /* read file to get menu items */
+  if( errNum == WLZ_ERR_NONE ){
+    if( fp = fopen(resourceFile, "r") ){
+      BibFileRecord	*bibfileRecord;
+      BibFileError	bibFileErr;
+
+      /* search for file list entry */
+      bibFileErr = BibFileRecordRead(&bibfileRecord, NULL, fp);
+      while( bibFileErr == BIBFILE_ER_NONE ){
+
+	/* create items and add to list */
+	if( !strncmp(bibfileRecord->name, "WlzXmFileListFileRecord", 23) ){
+	  cbs = (WlzXmFileListCallbackStruct *)
+	    AlcMalloc(sizeof(WlzXmFileListCallbackStruct));
+	  errNum = WlzEffBibParseFileRecord(bibfileRecord, &index,
+					    &(cbs->file), &(cbs->format));
+	  AlcDLPListEntryAppend(list, NULL, (void *) cbs,
+				WlzXmFileListItemFree);
+	}
+
+	BibFileRecordFree(&bibfileRecord);
+	bibFileErr = BibFileRecordRead(&bibfileRecord, NULL, fp);
+      }
+    }
+    else {
+      errNum = WLZ_ERR_FILE_OPEN;
+    }
+  }
+
+  if( dstErr ){
+    *dstErr = errNum;
+  }
+  return list;
+}
+
+MenuItem *WlzXmFileListCreateMenuItems(
+  AlcDLPList	*fileList,
+  XtCallbackProc	callbackProc,
+  WlzErrorNum	*dstErr)
+{
+  MenuItem	*items;
+  int		i, p, numItems;
+  AlcDLPItem	*listItem;
+  
+  WlzErrorNum	errNum=WLZ_ERR_NONE;
+  AlcErrno	alcErrno;
+  WlzXmFileListCallbackStruct	*cbs;
+  /* check inputs */
+  if( fileList == NULL ){
+    errNum = WLZ_ERR_PARAM_NULL;
+  }
+
+  /* create menu */
+  if( errNum == WLZ_ERR_NONE ){
+    /* create menu items */
+    numItems = AlcDLPListCount(fileList, &alcErrno);
+    items = (MenuItem *) AlcMalloc(sizeof(MenuItem) * (numItems+4));
+
+    /* set menu items */
+    i = 0;
+    listItem = fileList->head;
+    while( listItem ){
+      cbs = (WlzXmFileListCallbackStruct *) listItem->entry;
+
+      /* copy in the required fields and generate short name
+	 for the menu item */
+      for(p=strlen(cbs->file)-1; p >= 0; p--){
+	if( cbs->file[p] == '/' ){
+	  break;
+	}
+      }
+      items[i].name = (String) AlcMalloc(strlen((&(cbs->file[p+1]))) + 8);
+      sprintf(items[i].name, "%d.  %s  ", i, &(cbs->file[p+1]));
+      items[i].wclass = &xmPushButtonWidgetClass;
+      items[i].mnemonic = '\0';
+      items[i].accelerator = NULL;
+      items[i].accel_text = NULL;
+      items[i].item_set = False;
+      items[i].callback = callbackProc;
+      items[i].callback_data = (XtPointer) cbs;
+      items[i].help_callback = NULL;
+      items[i].help_callback_data = NULL;
+      items[i].tear_off_model = XmTEAR_OFF_DISABLED;
+      items[i].radio_behavior = False;
+      items[i].always_one = False;
+      items[i].subitems = NULL;
+
+      i++;
+      listItem = listItem->next;
+      if( listItem == fileList->head ){
+	listItem = NULL;
+      }
+    }
+
+    /* add a separator */
+    items[i].name = AlcStrDup("separator");
+    items[i].wclass = &xmSeparatorWidgetClass;
+    items[i].mnemonic = '\0';
+    items[i].accelerator = NULL;
+    items[i].accel_text = NULL;
+    items[i].item_set = False;
+    items[i].callback = NULL;
+    items[i].callback_data = NULL;
+    items[i].help_callback = NULL;
+    items[i].help_callback_data = NULL;
+    items[i].tear_off_model = XmTEAR_OFF_DISABLED;
+    items[i].radio_behavior = False;
+    items[i].always_one = False;
+    items[i].subitems = NULL;
+    i++;
+
+    /* add button to clear the list */
+    items[i].name = AlcStrDup("Clear list");
+    items[i].wclass = &xmPushButtonWidgetClass;
+    items[i].mnemonic = '\0';
+    items[i].accelerator = NULL;
+    items[i].accel_text = NULL;
+    items[i].item_set = False;
+    items[i].callback = callbackProc;
+    items[i].callback_data = NULL;
+    items[i].help_callback = NULL;
+    items[i].help_callback_data = NULL;
+    items[i].tear_off_model = XmTEAR_OFF_DISABLED;
+    items[i].radio_behavior = False;
+    items[i].always_one = False;
+    items[i].subitems = NULL;
+    i++;
+
+    items[i].name = NULL;
+  }
+
+  /* assign error */
+  if( dstErr ){
+    *dstErr = errNum;
+  }
+  return items;
+}
+
+WlzErrorNum WlzXmFileListDestroyMenuItems(
+  MenuItem	*items)
+{
+  WlzErrorNum	errNum=WLZ_ERR_NONE;
+  int		i;
+
+  /* check inputs */
+  if( items == NULL ){
+    errNum = WLZ_ERR_PARAM_NULL;
+  }
+  else {
+    for(i=0; items[i].name != NULL; i++){
+      AlcFree(items[i].name);
+    }
+    AlcFree(items);
+  }
+
+  return errNum;
+}
+
+WlzErrorNum WlzXmFileListResetMenu(
+  AlcDLPList	*fileList,
+  Widget	cascade,
+  XtCallbackProc	callbackProc)
+{
+  WlzErrorNum	errNum=WLZ_ERR_NONE;
+  Widget	menu=NULL;
+  MenuItem	*items;
+
+  if( cascade ){
+    XtVaGetValues(cascade, XmNsubMenuId, &menu, NULL);
+    if( menu ){
+      XtDestroyWidget(menu);
+    }
+    items = WlzXmFileListCreateMenuItems(globals.fileList,
+					 callbackProc, NULL);
+    menu = HGU_XmBuildPulldownMenu(cascade, XmTEAR_OFF_DISABLED,
+				   False, False, items);
+    WlzXmFileListDestroyMenuItems(items);
+  }
+
+  return errNum;
+}
+
+WlzErrorNum WlzXmFileListAddFile(
+  AlcDLPList	*fileList,
+  String	file,
+  WlzEffFormat	format)
+{
+  WlzXmFileListCallbackStruct	*cbs;
+  AlcDLPItem	*item;
+  WlzErrorNum	errNum=WLZ_ERR_NONE;
+  AlcErrno	alcErr;
+
+  /* check inputs */
+  if((fileList == NULL) || (file == NULL)){
+    errNum = WLZ_ERR_PARAM_NULL;
+  }
+
+  /* create new item and add to head of the list */
+  if( errNum == WLZ_ERR_NONE ){
+    /* check if already in the list, in which case bring
+       it to the top */
+    item = fileList->head;
+    while( item ){
+      cbs = (WlzXmFileListCallbackStruct *) item->entry;
+      if( !strcmp(file, cbs->file) ){
+	break;
+      }
+
+      if( item->next == fileList->head ){
+	item = NULL;
+      }
+      else {
+	item = item->next;
+      }
+    }
+
+    /* move or create new list item */
+    if( item ){
+      AlcDLPItemUnlink(fileList, item, 0, &alcErr);
+      AlcDLPItemInsert(fileList, NULL, item);
+    }
+    else {
+      cbs = (WlzXmFileListCallbackStruct *)
+	AlcMalloc(sizeof(WlzXmFileListCallbackStruct));
+      cbs->file = AlcStrDup(file);
+      cbs->format = format;
+      AlcDLPListEntryInsert(fileList, NULL, (void *) cbs,
+			    WlzXmFileListItemFree);
+    }
+  }
+
+  while( AlcDLPListCount(fileList, &alcErr) > WLZXMFILELIST_MAXNUMITEMS ){
+    AlcDLPItemUnlink( fileList, fileList->head->prev, 1, &alcErr);
+  }
+
+  return errNum;
+}
+
+void WlzXmFileListWriteHeader(
+  FILE	*fp)
+{
+  BibFileRecord		*bibfileRecord;
+  time_t		tmpTime;
+  char			*tmpS, tmpBuf[256];
+  char  		*idxS = NULL;
+  char  		*dateS = NULL;
+  char  		*hostS = NULL;
+  char  		*userS = NULL;
+  static char		unknownS[] = "unknown";
+
+  /* write some sort of identifier */
+  bibfileRecord = 
+    BibFileRecordMake("Ident", "0",
+		      BibFileFieldMakeVa("Text",
+					 "WlzXm Image File List",
+					 "Version",	"1.0",
+					 NULL));
+  BibFileRecordWrite(fp, NULL, bibfileRecord);
+  BibFileRecordFree(&bibfileRecord);
+
+  /* now a comment with user, machine, date etc. */
+  tmpS = getenv("USER");
+  (void )sprintf(tmpBuf, "User: %s", tmpS?tmpS:unknownS);
+  userS = AlcStrDup(tmpBuf);
+
+  tmpTime = time(NULL);
+  tmpS = ctime(&tmpTime);
+  *(tmpS + strlen(tmpS) - 1) = '\0';
+  (void )sprintf(tmpBuf, "Date: %s", tmpS?tmpS:unknownS);
+  dateS = AlcStrDup(tmpBuf);
+
+  tmpS = getenv("HOST");
+  (void )sprintf(tmpBuf, "Host: %s", tmpS?tmpS:unknownS);
+  hostS = AlcStrDup(tmpBuf);
+
+  bibfileRecord = 
+    BibFileRecordMake("Comment", "0",
+		      BibFileFieldMakeVa("Text", userS,
+					 "Text", dateS,
+					 "Text", hostS,
+					 NULL));
+  BibFileRecordWrite(fp, NULL, bibfileRecord);
+  BibFileRecordFree(&bibfileRecord);
+  AlcFree(userS);
+  AlcFree(dateS);
+  AlcFree(hostS);
+
+  return;
+}
+
+WlzErrorNum WlzXmFileListWriteResourceFile(
+  AlcDLPList	*fileList,
+  String	resourceFile)
+{
+  WlzErrorNum	errNum=WLZ_ERR_NONE;
+  AlcDLPItem	*item;
+  WlzXmFileListCallbackStruct	*cbs;
+  FILE		*fp;
+
+  /* check inputs */
+  if( (fileList == NULL) || (resourceFile == NULL) ){
+    errNum = WLZ_ERR_PARAM_NULL;
+  }
+
+  /* open the file */
+  if( errNum == WLZ_ERR_NONE ){
+
+    /* currently assume only these entries are written to the
+       resource file */
+    if( fp = fopen(resourceFile, "w") ){
+      /* write a file header */
+      WlzXmFileListWriteHeader(fp);
+      item = fileList->head;
+      while( item ){
+	cbs = (WlzXmFileListCallbackStruct *) item->entry;
+	WlzEffBibWriteFileRecord(fp, "WlzXmFileListFileRecord",
+				 cbs->file, cbs->format);
+	item = item->next;
+	if( item == fileList->head ){
+	  item = NULL;
+	}
+      }
+      fclose( fp );
+    }
+    else {
+      errNum = WLZ_ERR_FILE_OPEN;
+    }
+  }
+
+  return errNum;
+}
+
+WlzObject *WlzXmFileListReadObject(
+  Widget			w,
+  WlzXmFileListCallbackStruct	*cbs,
+  WlzErrorNum			*dstErr)
+{
+  WlzObject	*rtnObj=NULL;
+  WlzErrorNum	errNum=WLZ_ERR_NONE;
+
+  if((w != NULL) && (cbs != NULL)){
+    rtnObj = WlzEffReadObj(NULL, cbs->file, cbs->format, 0, &errNum);
+  }
+  else {
+    errNum = WLZ_ERR_PARAM_NULL;
+  }
+
+  if( dstErr ){
+    *dstErr = errNum;
+  }
+  return rtnObj;
+}
+
 
 /* menu item structure */
-static MenuItem file_type_menu_itemsP[] = {   /* file_menu items */
-  {"woolz", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
-   image_type_cb, (XtPointer) WLZEFF_FORMAT_WLZ,
-   HGU_XmHelpStandardCb, NULL,
-   XmTEAR_OFF_DISABLED, False, False, NULL},
-  {"ics", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
-   image_type_cb, (XtPointer) WLZEFF_FORMAT_ICS,
-   HGU_XmHelpStandardCb, NULL,
-   XmTEAR_OFF_DISABLED, False, False, NULL},
-  {"den", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
-   image_type_cb, (XtPointer) WLZEFF_FORMAT_DEN,
-   HGU_XmHelpStandardCb, NULL,
-   XmTEAR_OFF_DISABLED, False, False, NULL},
-  {"vff", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
-   image_type_cb, (XtPointer) WLZEFF_FORMAT_VFF,
-   HGU_XmHelpStandardCb, NULL,
-   XmTEAR_OFF_DISABLED, False, False, NULL},
-  {"pic", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
-   image_type_cb, (XtPointer) WLZEFF_FORMAT_PIC,
-   HGU_XmHelpStandardCb, NULL,
-   XmTEAR_OFF_DISABLED, False, False, NULL},
-  {"vtk", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
-   image_type_cb, (XtPointer) WLZEFF_FORMAT_VTK,
-   HGU_XmHelpStandardCb, NULL,
-   XmTEAR_OFF_DISABLED, False, False, NULL},
-  {"slc", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
-   image_type_cb, (XtPointer) WLZEFF_FORMAT_SLC,
-   HGU_XmHelpStandardCb, NULL,
-   XmTEAR_OFF_DISABLED, False, False, NULL},
-  {"ipl", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
-   image_type_cb, (XtPointer) WLZEFF_FORMAT_IPL,
-   HGU_XmHelpStandardCb, NULL,
-   XmTEAR_OFF_DISABLED, False, False, NULL},
-  {"pgm", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
-   image_type_cb, (XtPointer) WLZEFF_FORMAT_PNM,
-   HGU_XmHelpStandardCb, NULL,
-   XmTEAR_OFF_DISABLED, False, False, NULL},
-  {"bmp", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
-   image_type_cb, (XtPointer) WLZEFF_FORMAT_BMP,
-   HGU_XmHelpStandardCb, NULL,
-   XmTEAR_OFF_DISABLED, False, False, NULL},
-  {"tiff", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
-   image_type_cb, (XtPointer) WLZEFF_FORMAT_TIFF,
-   HGU_XmHelpStandardCb, NULL,
-   XmTEAR_OFF_DISABLED, False, False, NULL},
-  NULL,
-};
-
-static MenuItem write_file_type_menu_itemsP[] = {/* write file_menu items */
-  {"woolz", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
-   write_image_type_cb, (XtPointer) WLZEFF_FORMAT_WLZ,
-   HGU_XmHelpStandardCb, NULL,
-   XmTEAR_OFF_DISABLED, False, False, NULL},
-  {"ics", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
-   write_image_type_cb, (XtPointer) WLZEFF_FORMAT_ICS,
-   HGU_XmHelpStandardCb, NULL,
-   XmTEAR_OFF_DISABLED, False, False, NULL},
-  {"den", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
-   write_image_type_cb, (XtPointer) WLZEFF_FORMAT_DEN,
-   HGU_XmHelpStandardCb, NULL,
-   XmTEAR_OFF_DISABLED, False, False, NULL},
-  {"vff", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
-   write_image_type_cb, (XtPointer) WLZEFF_FORMAT_VFF,
-   HGU_XmHelpStandardCb, NULL,
-   XmTEAR_OFF_DISABLED, False, False, NULL},
-  {"pic", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
-   write_image_type_cb, (XtPointer) WLZEFF_FORMAT_PIC,
-   HGU_XmHelpStandardCb, NULL,
-   XmTEAR_OFF_DISABLED, False, False, NULL},
-  {"vtk", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
-   write_image_type_cb, (XtPointer) WLZEFF_FORMAT_VTK,
-   HGU_XmHelpStandardCb, NULL,
-   XmTEAR_OFF_DISABLED, False, False, NULL},
-  {"slc", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
-   write_image_type_cb, (XtPointer) WLZEFF_FORMAT_SLC,
-   HGU_XmHelpStandardCb, NULL,
-   XmTEAR_OFF_DISABLED, False, False, NULL},
-  {"pgm", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
-   write_image_type_cb, (XtPointer) WLZEFF_FORMAT_PNM,
-   HGU_XmHelpStandardCb, NULL,
-   XmTEAR_OFF_DISABLED, False, False, NULL},
-  {"bmp", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
-   write_image_type_cb, (XtPointer) WLZEFF_FORMAT_BMP,
-   HGU_XmHelpStandardCb, NULL,
-   XmTEAR_OFF_DISABLED, False, False, NULL},
-  {"tiff", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
-   write_image_type_cb, (XtPointer) WLZEFF_FORMAT_TIFF,
-   HGU_XmHelpStandardCb, NULL,
-   XmTEAR_OFF_DISABLED, False, False, NULL},
-  NULL,
-};
-
 static MenuItem file_menu_itemsP[] = {		/* file_menu items */
   {"read_reference", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
    read_reference_cb, NULL,
@@ -139,6 +451,12 @@ static MenuItem file_menu_itemsP[] = {		/* file_menu items */
   {"write_reference", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
    exportImageCb, NULL,
    HGU_XmHelpStandardCb, NULL,
+   XmTEAR_OFF_DISABLED, False, False, NULL},
+  {"", &xmSeparatorGadgetClass, 0, NULL, NULL, False,
+   NULL, NULL, NULL, NULL,
+   XmTEAR_OFF_DISABLED, False, False, NULL},
+  {"Recent", &xmCascadeButtonWidgetClass, 0, NULL, NULL, False,
+   NULL, NULL, HGU_XmHelpStandardCb, NULL,
    XmTEAR_OFF_DISABLED, False, False, NULL},
   {"", &xmSeparatorGadgetClass, 0, NULL, NULL, False,
    NULL, NULL, NULL, NULL,
@@ -179,35 +497,12 @@ void exportImageFileCb(
 {
   XmFileSelectionBoxCallbackStruct *cbs =
     (XmFileSelectionBoxCallbackStruct *) call_data;
-  WlzEffFormat	image_type = (WlzEffFormat) client_data;
+  WlzEffFormat	image_type;
   FILE		*fp;
-  String		icsfile;
+  String	icsfile;
 
   if( globals.obj == NULL ){
     return;
-  }
-
-  /* get the file pointer or file name if ics format */
-  if((image_type == WLZEFF_FORMAT_ICS) ||
-     (image_type == WLZEFF_FORMAT_PNM) ||
-     (image_type == WLZEFF_FORMAT_BMP) ||
-     (image_type == WLZEFF_FORMAT_TIFF))
-  {
-    if( (icsfile = HGU_XmGetFileStr(globals.topl, cbs->value,
-				    cbs->dir)) == NULL )
-    {
-      return;
-    }
-    fp = NULL;
-  }
-  else
-  {
-    if( (fp = HGU_XmGetFilePointer(globals.topl, cbs->value,
-				   cbs->dir, "w")) == NULL )
-    {
-      return;
-    }
-    icsfile = NULL;
   }
 
   /* set hour glass cursor */
@@ -218,24 +513,11 @@ void exportImageFileCb(
     WlzObject *tmpObj;
     tmpObj = WlzMakeMain(WLZ_2D_DOMAINOBJ, globals.obj->domain.p->domains[0],
 			 globals.obj->values.vox->values[0], NULL, NULL, NULL);
-    WlzEffWriteObj(fp, icsfile, tmpObj, image_type);
+    WlzXmWriteExtFFObject(tmpObj, w, cbs, &image_type);
     WlzFreeObj(tmpObj);
   }
   else {
-    WlzEffWriteObj(fp, icsfile, globals.obj, image_type);
-  }
-
-  /* close the file pointer if non NULL */
-  if( fp )
-  {
-    if( fclose( fp ) == EOF ){
-      HGU_XmUserError(globals.topl,
-		      "Write Reference Object:\n"
-		      "    Error closing the reference object file\n"
-		      "    Please check disk sapce or quotas.\n"
-		      "    Object not saved to disk.",
-		      XmDIALOG_FULL_APPLICATION_MODAL);
-    }
+    WlzXmWriteExtFFObject(globals.obj, w, cbs, &image_type);
   }
 
   /* set hour glass cursor */
@@ -427,68 +709,23 @@ void set_topl_title(
 
   return;
 }
-  
 
-void read_reference_object_cb(
-Widget	w,
-XtPointer	client_data,
-XtPointer	call_data)
+WlzErrorNum checkReadReferenceObject(
+  Widget	w,
+  WlzObject	*obj)
 {
-  XmFileSelectionBoxCallbackStruct *cbs =
-    (XmFileSelectionBoxCallbackStruct *) call_data;
-  WlzEffFormat	image_type = (WlzEffFormat) client_data;
-  WlzObject		*obj;
-  FILE		*fp;
-  String		icsfile;
-
-  /* get the file pointer or file name if ics format */
-  if((image_type == WLZEFF_FORMAT_ICS) ||
-     (image_type == WLZEFF_FORMAT_PNM) ||
-     (image_type == WLZEFF_FORMAT_BMP) ||
-     (image_type == WLZEFF_FORMAT_TIFF))
-  {
-    if( (icsfile = HGU_XmGetFileStr(globals.topl, cbs->value,
-				    cbs->dir)) == NULL )
-    {
-      return;
-    }
-    fp = NULL;
-  }
-  else
-  {
-    if( (fp = HGU_XmGetFilePointer(globals.topl, cbs->value,
-				   cbs->dir, "r")) == NULL )
-    {
-      return;
-    }
-    icsfile = NULL;
-  }
-
-  /* set hour glass cursor */
-  HGU_XmSetHourGlassCursor(globals.topl);
-
-  /* read the new reference object */
-  obj = WlzAssignObject(WlzEffReadObj(fp, icsfile, image_type, 0, NULL),
-			NULL);
-
-  /* close the file pointer if non NULL */
-  if( fp )
-  {
-    (void) fclose( fp );
-  }
+  /* can do much better than this */
 
   /* check the object */
   if( obj == NULL ){
-    HGU_XmUserError(globals.topl,
+    HGU_XmUserError(w,
 		    "Read Reference Object:\n"
 		    "    No reference object read - either the\n"
 		    "    selected file is empty or it is not a\n"
 		    "    woolz object file - please check the file\n"
 		    "    or make a new selection",
 		    XmDIALOG_FULL_APPLICATION_MODAL);
-    /* set hour glass cursor */
-    HGU_XmUnsetHourGlassCursor(globals.topl);
-    return;
+    return WLZ_ERR_OBJECT_NULL;
   }
 
   if( obj->values.core == NULL ){
@@ -498,20 +735,114 @@ XtPointer	call_data)
 		    "    value table. Please select an alternate\n"
 		    "    object",
 		    XmDIALOG_FULL_APPLICATION_MODAL);
-    WlzFreeObj( obj );
-    /* set hour glass cursor */
-    HGU_XmUnsetHourGlassCursor(globals.topl);
-    return;
+    return WLZ_ERR_VALUES_NULL;
   }
 
-  /* install the new reference object */
-  install_reference_object( obj );
-  WlzFreeObj( obj );
+  return WLZ_ERR_NONE;
+}
 
-  /* set the title of the top-level car */
-  if( XmStringGetLtoR(cbs->value, XmSTRING_DEFAULT_CHARSET, &icsfile) ){
-    set_topl_title(icsfile);
-    globals.file = icsfile;
+void referenceFileListCb(
+  Widget	w,
+  XtPointer	client_data,
+  XtPointer	call_data)
+{
+  WlzXmFileListCallbackStruct	*cbs=
+    (WlzXmFileListCallbackStruct *) client_data;
+  WlzObject	*obj;
+  Widget	cascade;
+  WlzErrorNum	errNum=WLZ_ERR_NONE;
+
+  HGU_XmSetHourGlassCursor(globals.topl);
+  if( cbs == NULL ){
+    /* clear list selection */
+    WlzXmFileListClearList(globals.fileList);
+    WlzXmFileListWriteResourceFile(globals.fileList,
+				   globals.resourceFile);
+    if( cascade = XtNameToWidget(globals.topl,
+				 "*file_menu*_pulldown*Recent") ){
+      WlzXmFileListResetMenu(globals.fileList, cascade, referenceFileListCb);
+    }
+  }
+  else if( obj = WlzXmFileListReadObject(w, cbs, &errNum) ){
+    obj = WlzAssignObject(obj, NULL);
+
+    /* install the new reference object */
+    if( checkReadReferenceObject(globals.topl, obj) == WLZ_ERR_NONE ){
+      install_reference_object( obj );
+
+      /* set the title of the top-level dialog */
+      set_topl_title(cbs->file);
+      globals.file = cbs->file;
+
+      /* add to the file list and write file */
+      WlzXmFileListAddFile(globals.fileList, cbs->file, cbs->format);
+      WlzXmFileListWriteResourceFile(globals.fileList,
+				     globals.resourceFile);
+      if( cascade = XtNameToWidget(globals.topl,
+				   "*file_menu*_pulldown*Recent") ){
+	WlzXmFileListResetMenu(globals.fileList, cascade, referenceFileListCb);
+      }
+    }
+    WlzFreeObj(obj);
+  }
+  else {
+    HGU_XmUserError(globals.topl,
+		    "Read Reference Object:\n"
+		    "    No reference object read - either the\n"
+		    "    selected file is empty or it is not the\n"
+		    "    correct object type - please check the\n"
+		    "    file or make a new selection",
+		    XmDIALOG_FULL_APPLICATION_MODAL);
+  }
+  HGU_XmUnsetHourGlassCursor(globals.topl);
+
+  return;
+}
+
+void read_reference_object_cb(
+  Widget	w,
+  XtPointer	client_data,
+  XtPointer	call_data)
+{
+  XmFileSelectionBoxCallbackStruct *cbs =
+    (XmFileSelectionBoxCallbackStruct *) call_data;
+  WlzEffFormat	image_type;
+  WlzObject	*obj;
+  FILE		*fp;
+  String	icsfile;
+  Widget	cascade;
+  WlzErrorNum		errNum=WLZ_ERR_NONE;
+
+  /* set hour glass cursor */
+  HGU_XmSetHourGlassCursor(globals.topl);
+
+  /* read the new reference object */
+  obj = WlzAssignObject(WlzXmReadExtFFObject(read_reference_dialog, cbs,
+					     &image_type, &errNum),
+			NULL);
+
+  /* install the new reference object */
+  if( checkReadReferenceObject(globals.topl, obj) == WLZ_ERR_NONE ){
+    install_reference_object( obj );
+
+    /* set the title of the top-level dialog */
+    if( XmStringGetLtoR(cbs->value, XmSTRING_DEFAULT_CHARSET, &icsfile) ){
+      set_topl_title(icsfile);
+      globals.file = icsfile;
+
+      /* add to the file list and write file */
+      WlzXmFileListAddFile(globals.fileList, icsfile, image_type);
+      WlzXmFileListWriteResourceFile(globals.fileList,
+				     globals.resourceFile);
+      if( cascade = XtNameToWidget(globals.topl,
+				   "*file_menu*_pulldown*Recent") ){
+	WlzXmFileListResetMenu(globals.fileList, cascade, referenceFileListCb);
+      }
+    }
+  }
+
+  if( obj ){
+    WlzFreeObj( obj );
   }
 
   /* set hour glass cursor */
@@ -550,161 +881,6 @@ XtPointer	call_data)
     exit( 0 );
 }
 
-static void image_type_cb(
-  Widget	w,
-  XtPointer	client_data,
-  XtPointer	call_data)
-{
-  WlzEffFormat	image_type = (WlzEffFormat) client_data;
-  XmString	pattern_str;
-
-  XtRemoveAllCallbacks(read_reference_dialog, XmNokCallback);
-
-  switch( image_type )
-  {
-   default:
-   case WLZEFF_FORMAT_WLZ:
-     XtAddCallback(read_reference_dialog, XmNokCallback,
-		   read_reference_object_cb, (XtPointer) WLZEFF_FORMAT_WLZ);
-     pattern_str = XmStringCreateSimple( "*.wlz" );
-     break;
-     
-   case WLZEFF_FORMAT_ICS:
-     XtAddCallback(read_reference_dialog, XmNokCallback,
-		   read_reference_object_cb, (XtPointer) WLZEFF_FORMAT_ICS);
-     pattern_str = XmStringCreateSimple( "*.ics" );
-     break;
-
-   case WLZEFF_FORMAT_DEN:
-     XtAddCallback(read_reference_dialog, XmNokCallback,
-		   read_reference_object_cb, (XtPointer) WLZEFF_FORMAT_DEN);
-     pattern_str = XmStringCreateSimple( "*.den" );
-     break;
-
-   case WLZEFF_FORMAT_VFF:
-     XtAddCallback(read_reference_dialog, XmNokCallback,
-		   read_reference_object_cb, (XtPointer) WLZEFF_FORMAT_VFF);
-     pattern_str = XmStringCreateSimple( "*.vff" );
-     break;
-
-   case WLZEFF_FORMAT_PIC:
-     XtAddCallback(read_reference_dialog, XmNokCallback,
-		   read_reference_object_cb, (XtPointer) WLZEFF_FORMAT_PIC);
-     pattern_str = XmStringCreateSimple( "*.pic" );
-     break;
-
-   case WLZEFF_FORMAT_VTK:
-     XtAddCallback(read_reference_dialog, XmNokCallback,
-		   read_reference_object_cb, (XtPointer) WLZEFF_FORMAT_VTK);
-     pattern_str = XmStringCreateSimple( "*.vtk" );
-     break;
-
-   case WLZEFF_FORMAT_SLC:
-     XtAddCallback(read_reference_dialog, XmNokCallback,
-		   read_reference_object_cb, (XtPointer) WLZEFF_FORMAT_SLC);
-     pattern_str = XmStringCreateSimple( "*.slc" );
-     break;
-
-   case WLZEFF_FORMAT_IPL:
-     XtAddCallback(read_reference_dialog, XmNokCallback,
-		   read_reference_object_cb, (XtPointer) WLZEFF_FORMAT_IPL);
-     pattern_str = XmStringCreateSimple( "*.ipl" );
-     break;
-     
-   case WLZEFF_FORMAT_PNM:
-     XtAddCallback(read_reference_dialog, XmNokCallback,
-		   read_reference_object_cb, (XtPointer) WLZEFF_FORMAT_PNM);
-     pattern_str = XmStringCreateSimple( "*.p?m" );
-     break;
-     
-   case WLZEFF_FORMAT_BMP:
-     XtAddCallback(read_reference_dialog, XmNokCallback,
-		   read_reference_object_cb, (XtPointer) WLZEFF_FORMAT_BMP);
-     pattern_str = XmStringCreateSimple( "*.bmp" );
-     break;
-
-   case WLZEFF_FORMAT_TIFF:
-     XtAddCallback(read_reference_dialog, XmNokCallback,
-		   read_reference_object_cb, (XtPointer) WLZEFF_FORMAT_TIFF);
-     pattern_str = XmStringCreateSimple( "*.tif?" );
-     break;
-  }
-
-  XtAddCallback(read_reference_dialog, XmNokCallback, PopdownCallback, NULL);
-
-  XtVaSetValues(read_reference_dialog, XmNpattern, pattern_str, NULL);
-  XmStringFree( pattern_str );
-  XmFileSelectionDoSearch( read_reference_dialog, NULL );
-
-  return;
-}
-
-static void write_image_type_cb(
-  Widget	w,
-  XtPointer	client_data,
-  XtPointer	call_data)
-{
-  WlzEffFormat	image_type = (WlzEffFormat) client_data;
-  XmString	pattern_str;
-
-  XtRemoveAllCallbacks(export_image_dialog, XmNokCallback);
-
-  switch( image_type )
-  {
-   default:
-   case WLZEFF_FORMAT_WLZ:
-     pattern_str = XmStringCreateSimple( "*.wlz" );
-     break;
-     
-   case WLZEFF_FORMAT_ICS:
-     pattern_str = XmStringCreateSimple( "*.ics" );
-     break;
-
-   case WLZEFF_FORMAT_DEN:
-     pattern_str = XmStringCreateSimple( "*.den" );
-     break;
-     
-   case WLZEFF_FORMAT_VFF:
-     pattern_str = XmStringCreateSimple( "*.vff" );
-     break;
-     
-   case WLZEFF_FORMAT_PIC:
-     pattern_str = XmStringCreateSimple( "*.pic" );
-     break;
-     
-   case WLZEFF_FORMAT_VTK:
-     pattern_str = XmStringCreateSimple( "*.vtk" );
-     break;
-     
-   case WLZEFF_FORMAT_SLC:
-     pattern_str = XmStringCreateSimple( "*.slc" );
-     break;
-     
-   case WLZEFF_FORMAT_PNM:
-     pattern_str = XmStringCreateSimple( "*.p?m" );
-     break;
-     
-   case WLZEFF_FORMAT_BMP:
-     pattern_str = XmStringCreateSimple( "*.bmp" );
-     break;
-     
-   case WLZEFF_FORMAT_TIFF:
-     pattern_str = XmStringCreateSimple( "*.tif?" );
-     break;
-     
-  }
-
-  XtAddCallback(export_image_dialog, XmNokCallback,
-		exportImageFileCb, client_data);
-  XtAddCallback(export_image_dialog, XmNokCallback, PopdownCallback, NULL);
-
-  XtVaSetValues(export_image_dialog, XmNpattern, pattern_str, NULL);
-  XmStringFree( pattern_str );
-  XmFileSelectionDoSearch( export_image_dialog, NULL );
-
-  return;
-}
-
 
 /* file_menu initialisation procedure */
 #define set_att_offset(field)   XtOffsetOf(ThreeDViewGlobals, field)
@@ -712,7 +888,7 @@ static void write_image_type_cb(
 void file_menu_init(
   Widget	topl)
 {
-  Widget	form, file_type_menu, toggle;
+  Widget	form, toggle, cascade;
   XmString	xmstr;
   Visual	*visual;
   Arg		arg[1];
@@ -733,28 +909,11 @@ void file_menu_init(
   read_reference_dialog = XmCreateFileSelectionDialog( topl,
 						"read_reference_dialog", arg, 1);
 
-  /* add a form to include file type and fill-blanks toggle */
-  form = XtVaCreateManagedWidget("read_file_form", xmFormWidgetClass,
-				 read_reference_dialog,
-				 XmNborderWidth,	0,
-				 NULL);
-
-  /* add a file type selection menu */
-  file_type_menu = HGU_XmBuildMenu(form, XmMENU_OPTION,
-				   "file_type", 0, XmTEAR_OFF_DISABLED,
-				   file_type_menu_itemsP);
-  XtVaSetValues(file_type_menu,
-		XmNtopAttachment,	XmATTACH_FORM,
-		XmNleftAttachment,	XmATTACH_FORM,
-		XmNrightAttachment,	XmATTACH_FORM,
-		NULL);
-  XtManageChild( file_type_menu );
-
-  /* add the callbacks */
-  image_type_cb( read_reference_dialog, (XtPointer) WLZEFF_FORMAT_WLZ,
-		NULL);
-  XtAddCallback( read_reference_dialog, XmNcancelCallback, 
-		PopdownCallback, NULL);
+  read_reference_dialog = 
+    WlzXmCreateExtFFObjectFSB(topl, "read_reference_dialog",
+			      read_reference_object_cb,
+			      NULL);
+  WlzXmExtFFObjectFSBSetType(read_reference_dialog, WLZEFF_FORMAT_WLZ);
   XtManageChild( read_reference_dialog );
 
   /* add to the save restore list */
@@ -763,27 +922,23 @@ void file_menu_init(
 
   /* create the write image dialog */
   export_image_dialog =
-    XmCreateFileSelectionDialog(topl,
-				"export_image_dialog", arg, 1);
-
-  /* add a file type selection menu */
-  file_type_menu = HGU_XmBuildMenu(export_image_dialog, XmMENU_OPTION,
-				   "file_type", 0, XmTEAR_OFF_DISABLED,
-				   write_file_type_menu_itemsP);
-  XtManageChild( file_type_menu );
-
-  /* add the callbacks */
-  write_image_type_cb( export_image_dialog, (XtPointer) WLZEFF_FORMAT_WLZ,
-		      NULL);
-  XtAddCallback( export_image_dialog, XmNcancelCallback, 
-		PopdownCallback, NULL);
-  XtAddCallback(export_image_dialog, XmNmapCallback,
-		FSBPopupCallback, NULL);
+    WlzXmCreateExtFFObjectFSB(topl, "export_image_dialog",
+			      exportImageFileCb, NULL);
+  WlzXmExtFFObjectFSBSetType(export_image_dialog, WLZEFF_FORMAT_WLZ);
   XtManageChild( export_image_dialog );
 
   /* add to the save restore list */
   HGU_XmSaveRestoreAddWidget( export_image_dialog, HGU_XmFSD_SaveFunc,
 			     (XtPointer) XtName(topl), NULL, NULL );
+
+  /* add pulldown for the recent file-list */
+  if( cascade = XtNameToWidget(globals.topl, "*file_menu*_pulldown*Recent") ){
+    globals.resourceFile = (String) 
+      AlcMalloc(sizeof(char) * (strlen(getenv("HOME")) + 16));
+    sprintf(globals.resourceFile, "%s/%s", getenv("HOME"), ".ma3dviewrc");
+    globals.fileList = WlzXmFileListCreateList(globals.resourceFile, NULL);
+    WlzXmFileListResetMenu(globals.fileList, cascade, referenceFileListCb);
+  }
 
   /* check for an initial reference file */
   if( initial_image_file != NULL ){
