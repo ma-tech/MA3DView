@@ -844,7 +844,7 @@ void distanceCb(
   }
   else {
     obj = WlzGetSectionFromObject(globals.obj, globals.wlzViewStr,
-				  WLZ_INTERPOLATION_LINEAR, &errNum);
+				  WLZ_INTERPOLATION_NEAREST, &errNum);
   }
   if( errNum == WLZ_ERR_NONE ){
     globals.view_object = WlzAssignObject(obj, NULL);
