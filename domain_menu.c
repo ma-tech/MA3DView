@@ -341,7 +341,7 @@ void installNewDomain(
     }
   }
   else if( newItem = (DomainListItem *) AlcCalloc(sizeof(DomainListItem), 1) ){
-    newItem->file = strdup(file);
+    newItem->file = AlcStrDup(file);
     newItem->fileDisplayIndx = displayIndx;
     newItem->obj = WlzAssignObject(obj, NULL);
     newItem->listStr = XmStringCreateLocalized(newItem->file+displayIndx);
