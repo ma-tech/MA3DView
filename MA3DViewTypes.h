@@ -23,13 +23,6 @@
 *   Maintenance :  date - name - comments (Last changes at the top)	*
 ************************************************************************/
 
-typedef enum _WlzGreyTransformType {
-  WLZ_GREYTRANSFORMTYPE_LINEAR,
-  WLZ_GREYTRANSFORMTYPE_GAMMA,
-  WLZ_GREYTRANSFORMTYPE_EXPONENTIAL,
-  WLZ_GREYTRANSFORMTYPE_SIGMOID
-} WlzGreyTransformType;
-
 /* defines */
 #define       CANVAS_MARGIN 32
 
