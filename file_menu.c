@@ -354,6 +354,10 @@ void install_reference_object(
     return;
   }
   if( (obj->type == WLZ_2D_DOMAINOBJ) && (obj->values.core != NULL) ){
+    if( globals.obj2D ){
+      WlzFreeObj(globals.obj2D);
+      globals.obj2D = NULL;
+    }
     globals.obj2D = WlzAssignObject(obj, NULL);
     domain.p = WlzMakePlaneDomain(WLZ_PLANEDOMAIN_DOMAIN, 0, 0,
 				  obj->domain.i->line1,

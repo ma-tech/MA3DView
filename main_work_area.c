@@ -13,7 +13,7 @@
 *   Author Name :  Richard Baldock					*
 *   Author Login:  richard@hgu.mrc.ac.uk				*
 *   Date        :  Fri Oct 19 14:25:51 2001				*
-*   $Revision$								*
+*   $Revision$   							*
 *   $Name$								*
 *   Synopsis    : 							*
 *************************************************************************
@@ -247,7 +247,9 @@ void setViewSelection(
 
   /* unset the currently selected */
   XtVaGetValues(mode_rc, XmNmenuHistory, &toggle, NULL);
-  XtVaSetValues(toggle, XmNset, False, NULL);
+  if( toggle ){
+    XtVaSetValues(toggle, XmNset, False, NULL);
+  }
 
   /* set selection and row-column history */
   if( strcmp(selection, "y_z") == 0 ){
@@ -262,7 +264,9 @@ void setViewSelection(
   else {
     toggle = XtNameToWidget(globals.topl, "*work_area*mode_rc.x_y");
   }
-  XtVaSetValues(toggle, XmNset, True, NULL);
+  if( toggle ){
+    XtVaSetValues(toggle, XmNset, True, NULL);
+  }
   XtVaSetValues(mode_rc, XmNmenuHistory, toggle, NULL);
 
 
@@ -834,8 +838,14 @@ void distanceCb(
     WlzFreeObj(globals.view_object);
     globals.view_object = NULL;
   }
-  obj = WlzGetSectionFromObject(globals.obj, globals.wlzViewStr,
-				WLZ_INTERPOLATION_LINEAR, &errNum);
+  if( globals.obj2D ){
+    obj = WlzGetSectionFromObject(globals.obj, globals.wlzViewStr,
+				  WLZ_INTERPOLATION_NEAREST, &errNum);
+  }
+  else {
+    obj = WlzGetSectionFromObject(globals.obj, globals.wlzViewStr,
+				  WLZ_INTERPOLATION_LINEAR, &errNum);
+  }
   if( errNum == WLZ_ERR_NONE ){
     globals.view_object = WlzAssignObject(obj, NULL);
   }
