@@ -714,6 +714,8 @@ WlzErrorNum checkReadReferenceObject(
   Widget	w,
   WlzObject	*obj)
 {
+  WlzErrorNum	errNum=WLZ_ERR_NONE;
+
   /* can do much better than this */
 
   /* check the object */
@@ -725,20 +727,48 @@ WlzErrorNum checkReadReferenceObject(
 		    "    woolz object file - please check the file\n"
 		    "    or make a new selection",
 		    XmDIALOG_FULL_APPLICATION_MODAL);
-    return WLZ_ERR_OBJECT_NULL;
+    errNum = WLZ_ERR_OBJECT_NULL;
   }
+  else {
+    /* check object type */
+    switch( obj->type ){
+    case WLZ_2D_DOMAINOBJ:
+    case WLZ_3D_DOMAINOBJ:
+      /* check domain */
+      if( obj->domain.core == NULL ){
+	HGU_XmUserError(globals.topl,
+			"Read Reference Object:\n"
+			"    NULL domain in the reference object - some-\n"
+			"    thing wrong. Please select an alternative\n"
+			"    object",
+			XmDIALOG_FULL_APPLICATION_MODAL);
+	errNum = WLZ_ERR_VALUES_NULL;
+      }
+      /* check values */
+      else if( obj->values.core == NULL ){
+	HGU_XmUserError(globals.topl,
+			"Read Reference Object:\n"
+			"    The reference object must have a grey-\n"
+			"    value table. Please select an alternative\n"
+			"    object",
+			XmDIALOG_FULL_APPLICATION_MODAL);
+	errNum = WLZ_ERR_VALUES_NULL;
+      }
+      break;
 
-  if( obj->values.core == NULL ){
-    HGU_XmUserError(globals.topl,
-		    "Read Reference Object:\n"
-		    "    The reference object must have a grey-\n"
-		    "    value table. Please select an alternate\n"
-		    "    object",
-		    XmDIALOG_FULL_APPLICATION_MODAL);
-    return WLZ_ERR_VALUES_NULL;
-  }
+    case WLZ_COMPOUND_ARR_1:
+    case WLZ_COMPOUND_ARR_2:
+      /* check sub-objects to see if they are plausibly
+	 an rgb object */
+      break;
 
-  return WLZ_ERR_NONE;
+    default:
+      errNum = WLZ_ERR_OBJECT_TYPE;
+      break;
+    }
+  } 
+
+  return errNum;
 }
 
 void referenceFileListCb(
@@ -906,9 +936,6 @@ void file_menu_init(
   XtSetArg(arg[0], XmNvisual, visual);
 
   /* create the read-obj file selection dialog */
-  read_reference_dialog = XmCreateFileSelectionDialog( topl,
-						"read_reference_dialog", arg, 1);
-
   read_reference_dialog = 
     WlzXmCreateExtFFObjectFSB(topl, "read_reference_dialog",
 			      read_reference_object_cb,

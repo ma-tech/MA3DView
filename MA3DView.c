@@ -168,8 +168,9 @@ main(
   XtToolkitInitialize();
   app_con = XtCreateApplicationContext();
   XtAppSetFallbackResources(app_con, fallback_resources);
-  dpy = XtOpenDisplay(app_con, NULL, NULL, "MA3Dview", NULL, 0,
+  dpy = XtOpenDisplay(app_con, NULL, "MA3DView", "MA3DView", NULL, 0,
 		      &argc, argv);
+  globals.dpy = dpy;
 
   /* now check what visuals are available since we require 24-bit */
   if( !(visual = HGU_XGetVisual(dpy, DefaultScreen(dpy), TrueColor, 24)) ){

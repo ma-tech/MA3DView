@@ -411,7 +411,7 @@ XtPointer	call_data)
     XDestroyImage(globals.ximage);
     globals.ximage = NULL;    
   }
-  globals.ximage = HGU_XmObjToXImage(w, globals.view_object);
+  globals.ximage = HGU_XmObjToXImage(globals.topl, globals.view_object);
 
   /* calculate the expose event and call expose callback */
   canvasExposeCb(globals.canvas, NULL, NULL);
@@ -745,6 +745,47 @@ void sigmaSetCb(
 
   return;
 }
+void setSourceRangeCb(
+  Widget	w,
+  XtPointer	client_data,
+  XtPointer	call_data)
+{
+  int		setMaxFlg=(int)client_data;
+  float		xVal, yVal;
+  int		newMin, newMax;
+  Widget	slider;
+
+  if( globals.histogram ){
+    if( HGU_XmGetHairCursor(globals.histogram, &xVal, &yVal) ){
+      return;
+    }
+    if( setMaxFlg ){
+      newMax = xVal;
+      newMin = globals.srcSliderMin;
+      if( newMax < newMin ){
+	newMin = newMax;
+      }
+    }
+    else {
+      newMin = xVal;
+      newMax = newMin + globals.srcSliderWidth;
+      newMax = WLZ_MIN(newMax, globals.srcMax);
+    }
+    globals.srcSliderMin = newMin;
+    globals.srcSliderWidth = (newMax == newMin)? 1 : newMax - newMin;
+
+    /* now set min and width */
+    if( slider = XtNameToWidget(globals.imageDialog, "*src_grey_min") ){
+      HGU_XmSetSliderValue(slider, (float) globals.srcSliderMin);
+    }
+    if( slider = XtNameToWidget(globals.imageDialog, "*src_grey_width") ){
+      HGU_XmSetSliderValue(slider, (float) globals.srcSliderWidth);
+    }
+    setTransformDisplayCb(w, client_data, call_data);
+  }
+
+  return;
+}
 
 /* create the image grey-level mapping controls */
 static ActionAreaItem   image_controls_dialog_actions[] = {
@@ -769,6 +810,21 @@ static MenuItem transformTypeItems[] = {
    XmTEAR_OFF_DISABLED, False, False, NULL},
   NULL,
 };
+static MenuItem setRangePopupItemsP[] = {
+  {"set min", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
+   setSourceRangeCb, (XtPointer) 0,
+   HGU_XmHelpStandardCb, NULL,
+   XmTEAR_OFF_DISABLED, False, False, NULL},
+  {"set max", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
+   setSourceRangeCb, (XtPointer) 1,
+   HGU_XmHelpStandardCb, NULL,
+   XmTEAR_OFF_DISABLED, False, False, NULL},
+  {"reset", &xmPushButtonGadgetClass, 0, NULL, NULL, False,
+   resetImageControlsCb, (XtPointer) WLZ_GREYTRANSFORMTYPE_SIGMOID,
+   HGU_XmHelpStandardCb, NULL,
+   XmTEAR_OFF_DISABLED, False, False, NULL},
+  NULL,
+};
 
 Widget	createImageControls(
   Widget	topl)
@@ -777,7 +833,7 @@ Widget	createImageControls(
   Widget	rowcolumn, button, option, toggle, widget, rc;
   Widget	graph, graphics, slider, scale;
   Widget	histogram_frame, transform_frame, grey_bounds_frame;
-  Widget	transform_params_frame;
+  Widget	transform_params_frame, popup;
   Visual	*visual;
   Arg		arg[1];
 
@@ -839,6 +895,15 @@ Widget	createImageControls(
   globals.histogram = graph;
   graphics = XtNameToWidget(graph, "*.graphics");
   XtAddCallback(graphics, XmNexposeCallback, setHistogramDisplayCb, dialog);
+
+  /* add a popup to set min and max of transform */
+  popup = HGU_XmBuildMenu(graphics,
+			  XmMENU_POPUP, "set_range_popup",
+			  '\0', XmTEAR_OFF_DISABLED,
+			  setRangePopupItemsP);
+  XtVaSetValues(popup,
+		XmNpopupEnabled, XmPOPUP_AUTOMATIC,
+		NULL);
 
   /* frame for the transform parameters */
   frame = XtVaCreateManagedWidget("transform_params_frame", xmFrameWidgetClass,
