@@ -107,6 +107,7 @@ INCDIRS			= .  \
 			../../HGUX/libHguXm \
 			../../HGUX/libhguGL \
 			../../External/Tiff/tiff-v3.5.7/libtiff \
+			../../External/Jpeg/jpeg-6b \
 			  $(HGU_INC_DIR) \
 			  $(OPENGL_INC_DIR) \
 			  $(X11_INC_DIR) \
@@ -126,6 +127,7 @@ LIBDIRS			= \
 			../../HGUX/libHguXm \
 			../../HGUX/libhguGL \
 			../../External/Tiff/libtiff \
+			../../External/Jpeg/jpeg-6b \
 			$(OPENGL_LIB_DIR) \
 			$(SYSLIB) \
 			$(HGU_LIB_DIR) \
@@ -143,6 +145,7 @@ LIBDIRS			= \
 			../../HGUX/libHguXm \
 			../../HGUX/libhguGL \
 			../../External/Tiff/tiff-v3.5.7/libtiff \
+			../../External/Jpeg/jpeg-6b \
 			$(HGU_LIB_DIR) \
 			$(OPENGL_LIB_DIR) \
 			$(MOTIF_LIB_DIR) \
@@ -195,6 +198,7 @@ LIBDIRS			= \
 			../../HGUX/libHguXm \
 			../../HGUX/libhguGL \
 			../../External/Tiff/tiff-v3.5.7/libtiff \
+			../../External/Jpeg/jpeg-6b \
 			/Users/richard/downloads/darwin-extras/langinfo \
 			$(HGU_LIB_DIR) \
 			$(OPENGL_LIB_DIR) \
@@ -285,7 +289,8 @@ $(CXXFLAGS) CommonTypes.o ./$(ARCHIVE) $(REQUIRED_LIBS)
 # Target which installs everything after it has been built (should not need
 # modifying).
 install:		install_includes install_manpages install_archive \
-			install_executables install_www install_doc
+			install_executables install_www install_doc \
+			install_release
 
 # Target which installs an archive (should not need modifying).
 install_archive:	$(ARCHIVE)
@@ -300,6 +305,14 @@ ifneq ($(strip $(SUBSYSTEMS)),)
 			$(subsystems)
 endif
 			$(install_executables)
+
+# Target which installs release version executables (should not need modifying).
+install_release:	$(EXECUTABLES)
+ifneq ($(strip $(SUBSYSTEMS)),)
+			$(subsystems)
+endif
+			$(install_release)
+
 
 # Target which installs the public 'C' header files (should not need 
 # modifying).
