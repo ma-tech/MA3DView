@@ -85,6 +85,7 @@ INCDIRS			= .  \
 			../../HGUX/libHguX \
 			../../HGUX/libHguXm \
 			../../HGUX/libhguGL \
+			../../External/Tiff/libtiff \
 			  $(HGU_INC_DIR) \
 			  $(OPENGL_INC_DIR) \
 			  $(X11_INC_DIR) \
@@ -104,6 +105,7 @@ LIBDIRS			= \
 			../../HGUX/libHguX \
 			../../HGUX/libHguXm \
 			../../HGUX/libhguGL \
+			../../External/Tiff/libtiff \
 			$(OPENGL_LIB_DIR) \
 			$(SYSLIB) \
 			$(HGU_LIB_DIR) \
@@ -186,6 +188,10 @@ EXTRA_LIBS		= tiff m gen socket nsl
 X11LIBS         	= Xt Xmu X11  Xi Xext
 else
 EXTRA_LIBS		= tiff m gen
+X11LIBS         	= Xt Xmu X11 Xext
+endif
+ifeq	 	($(UNIXTYPE), LINUX2)
+EXTRA_LIBS		= tiff m Xp SM ICE
 X11LIBS         	= Xt Xmu X11 Xext
 endif
 
