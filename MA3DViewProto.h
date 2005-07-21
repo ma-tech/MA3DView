@@ -16,7 +16,7 @@
 *   Author Name :  Richard Baldock					*
 *   Author Login:  richard@hgu.mrc.ac.uk				*
 *   Date        :  Fri Oct 19 13:42:09 2001				*
-*   $Revision$								*
+*   $Revision$						       	*
 *   $Name$								*
 *   Synopsis    : 							*
 *************************************************************************
@@ -113,10 +113,10 @@ extern void setTransformDisplayCb(
   Widget	w,
   XtPointer	client_data,
   XtPointer	call_data);
-extern void setLutTransform(void);
-extern void resetImageControlValues(void);
-extern void setImageControls(void);
-extern void setTransformDisplay(void);
+extern void setLutTransform(int		imageIndx);
+extern void resetImageControlValues(int	imageIndx);
+extern void setImageControls(int	imageIndx);
+extern void setTransformDisplay(int	imageIndx);
 
 /* file_menu.c */
 extern MenuItem		*file_menu_items;
@@ -134,7 +134,7 @@ extern void	write_obj_cb	(Widget		w,
 extern void	quit_cb		(Widget		w,
 				 XtPointer	client_data,
 				 XtPointer	call_data);
-extern void resetGreyRange(void);
+extern void resetGreyRange(int	imageIndx);
 
 extern void exportImageCb(
   Widget	w,

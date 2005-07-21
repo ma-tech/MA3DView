@@ -45,7 +45,7 @@ typedef struct _3DViewGlobals{
   
   Widget		topl;
   XtAppContext		app_con;
-  GC			gc_greys, gc_red, gc_blue, gc_green;
+    GC			gc_greys, gc_red, gc_blue, gc_green;
   GC			gc_set;
   Visual		*toplVisual;
   int			toplDepth;
@@ -59,22 +59,24 @@ typedef struct _3DViewGlobals{
   AlcDLPList		*fileList;
   
   /* image controls globals */
-  WlzObject		*objHistogram;
+  WlzObject		*objHistogram[3];
+  int			objIndx;
   Widget		imageDialog;
-  Widget		histogram;
+  Widget		histogram[3];
   Widget		graph;
-  int			srcMin;
-  int			srcMax;
-  int			srcSliderMin;
-  int			srcSliderWidth;
-  int			dstSliderMin;
-  int			dstSliderMax;
-  WlzGreyTransformType	transType;
-  double		gamma;
-  double		mean;
-  double		sigma;
-  int			invert;
-  unsigned char		*lut;
+  WlzGreyType		gType;
+  int			srcMin[3];
+  int			srcMax[3];
+  int			srcSliderMin[3];
+  int			srcSliderWidth[3];
+  int			dstSliderMin[3];
+  int			dstSliderMax[3];
+  WlzGreyTransformType	transType[3];
+  double		gamma[3];
+  double		mean[3];
+  double		sigma[3];
+  int			invert[3];
+  unsigned char		*lut[3];
 
   /* 3D view globals */
   GLuint		ref_display_list;

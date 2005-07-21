@@ -58,63 +58,64 @@ MenuItem	*image_menu_items = &(image_menu_itemsP[0]);
 Widget		image_controls_dialog=NULL;
 
 /* image procedures */
-void setLutTransform(void)
+void setLutTransform(
+  int		indx)
 {
   int		i, gi;
   double	g, A, B, fmin, fmax, mu, sig;
 
   /* calculate the transform */
-  switch( globals.transType ){
+  switch( globals.transType[indx] ){
   default:
   case WLZ_GREYTRANSFORMTYPE_LINEAR:
-    for(i=0, gi=globals.srcMin; gi <= globals.srcSliderMin; i++, gi++){
-      globals.lut[i] = globals.dstSliderMin;
+    for(i=0, gi=globals.srcMin[indx]; gi <= globals.srcSliderMin[indx]; i++, gi++){
+      globals.lut[indx][i] = globals.dstSliderMin[indx];
     }
-    A = ((double) (globals.dstSliderMax - globals.dstSliderMin)) /
-      globals.srcSliderWidth;
-    B = globals.dstSliderMin - A*globals.srcSliderMin;
-    for(; gi <= globals.srcSliderMin + globals.srcSliderWidth; i++, gi++){
-      globals.lut[i] = (int) (A*gi + B);
+    A = ((double) (globals.dstSliderMax[indx] - globals.dstSliderMin[indx])) /
+      globals.srcSliderWidth[indx];
+    B = globals.dstSliderMin[indx] - A*globals.srcSliderMin[indx];
+    for(; gi <= globals.srcSliderMin[indx] + globals.srcSliderWidth[indx]; i++, gi++){
+      globals.lut[indx][i] = (int) (A*gi + B);
     }
-    for(; gi < globals.srcMax; i++, gi++){
-      globals.lut[i] = globals.dstSliderMax;
+    for(; gi < globals.srcMax[indx]; i++, gi++){
+      globals.lut[indx][i] = globals.dstSliderMax[indx];
     }
     break;
 
   case WLZ_GREYTRANSFORMTYPE_GAMMA:
-    for(i=0, gi=globals.srcMin; gi <= globals.srcSliderMin; i++, gi++){
-      globals.lut[i] = globals.dstSliderMin;
+    for(i=0, gi=globals.srcMin[indx]; gi <= globals.srcSliderMin[indx]; i++, gi++){
+      globals.lut[indx][i] = globals.dstSliderMin[indx];
     }
-    A = (globals.dstSliderMax - globals.dstSliderMin) / 
-      pow(globals.srcSliderWidth, globals.gamma);
-    B = globals.dstSliderMin;
-    for(; gi <= globals.srcSliderMin + globals.srcSliderWidth; i++, gi++){
+    A = (globals.dstSliderMax[indx] - globals.dstSliderMin[indx]) / 
+      pow(globals.srcSliderWidth[indx], globals.gamma[indx]);
+    B = globals.dstSliderMin[indx];
+    for(; gi <= globals.srcSliderMin[indx] + globals.srcSliderWidth[indx]; i++, gi++){
       g = gi;
-      globals.lut[i] = (int) (A * pow(g - globals.srcSliderMin, globals.gamma) +
+      globals.lut[indx][i] = (int) (A * pow(g - globals.srcSliderMin[indx], globals.gamma[indx]) +
 			      B);
     }
-    for(; gi < globals.srcMax; i++, gi++){
-      globals.lut[i] = globals.dstSliderMax;
+    for(; gi < globals.srcMax[indx]; i++, gi++){
+      globals.lut[indx][i] = globals.dstSliderMax[indx];
     }
     break;
 
   case WLZ_GREYTRANSFORMTYPE_SIGMOID:
-    for(i=0, gi=globals.srcMin; gi <= globals.srcSliderMin; i++, gi++){
-      globals.lut[i] = globals.dstSliderMin;
+    for(i=0, gi=globals.srcMin[indx]; gi <= globals.srcSliderMin[indx]; i++, gi++){
+      globals.lut[indx][i] = globals.dstSliderMin[indx];
     }
-    mu = globals.mean + globals.srcSliderMin;
-    sig = globals.sigma;
-    fmin = 1.0/(1.0 + exp(-(globals.srcSliderMin - mu)/sig));
-    fmax = 1.0/(1.0 + exp(-(globals.srcSliderMin + globals.srcSliderWidth -
+    mu = globals.mean[indx] + globals.srcSliderMin[indx];
+    sig = globals.sigma[indx];
+    fmin = 1.0/(1.0 + exp(-(globals.srcSliderMin[indx] - mu)/sig));
+    fmax = 1.0/(1.0 + exp(-(globals.srcSliderMin[indx] + globals.srcSliderWidth[indx] -
 			    mu)/sig));
-    A = (globals.dstSliderMax - globals.dstSliderMin) / (fmax - fmin);
-    B = globals.dstSliderMin - A * fmin;
-    for(; gi <= globals.srcSliderMin + globals.srcSliderWidth; i++, gi++){
+    A = (globals.dstSliderMax[indx] - globals.dstSliderMin[indx]) / (fmax - fmin);
+    B = globals.dstSliderMin[indx] - A * fmin;
+    for(; gi <= globals.srcSliderMin[indx] + globals.srcSliderWidth[indx]; i++, gi++){
       g = gi;
-      globals.lut[i] = (int) (A / (1.0 + exp(-(g - mu)/sig)) + B);
+      globals.lut[indx][i] = (int) (A / (1.0 + exp(-(g - mu)/sig)) + B);
     }
-    for(; gi < globals.srcMax; i++, gi++){
-      globals.lut[i] = globals.dstSliderMax;
+    for(; gi < globals.srcMax[indx]; i++, gi++){
+      globals.lut[indx][i] = globals.dstSliderMax[indx];
     }
     break;
 
@@ -123,8 +124,8 @@ void setLutTransform(void)
   if( globals.invert ){
     for(; i >0;){
       i--;
-      globals.lut[i] = (globals.dstSliderMax + 
-			globals.dstSliderMin - globals.lut[i]);
+      globals.lut[indx][i] = (globals.dstSliderMax[indx] + 
+			globals.dstSliderMin[indx] - globals.lut[indx][i]);
     }
   }
 
@@ -147,11 +148,11 @@ XtPointer	call_data)
 
   /* change the grey-values "in-place" */
   min.type = WLZ_GREY_INT;
-  min.v.inv = globals.srcMin;
+  min.v.inv = globals.srcMin[globals.objIndx];
   max.type = WLZ_GREY_INT;
-  max.v.inv = globals.srcMax;
+  max.v.inv = globals.srcMax[globals.objIndx];
   lut.type = WLZ_GREY_UBYTE;
-  lut.p.ubp = globals.lut;
+  lut.p.ubp = globals.lut[globals.objIndx];
   errNum = WlzGreySetRangeLut(globals.obj, min, max, lut);
 
   /* convert to a UBYTE image and install */
@@ -220,20 +221,20 @@ XtPointer	call_data)
 {
   float		xl, xu, yl, yu, X, Y;
 
-  if( globals.objHistogram == NULL ){
+  if( globals.objHistogram[globals.objIndx] == NULL ){
     return;
   }
 
   /* get the current graph scale limits and cursor position */
-  HGU_XmGetGraphLimits(globals.histogram, &xl, &xu, &yl, &yu);
-  HGU_XmGetHairCursor(globals.histogram, &X, &Y);
+  HGU_XmGetGraphLimits(globals.histogram[globals.objIndx], &xl, &xu, &yl, &yu);
+  HGU_XmGetHairCursor(globals.histogram[globals.objIndx], &X, &Y);
 
   /* reset scale */
   xl = (xl + X) / 2.0;
   xu = (xu + X) / 2.0;
   yl = (yl + Y) / 2.0;
   yu = (yu + Y) / 2.0;
-  HGU_XmSetGraphLimits(globals.histogram, xl, xu, yl, yu);
+  HGU_XmSetGraphLimits(globals.histogram[globals.objIndx], xl, xu, yl, yu);
 
   return;
 }
@@ -245,20 +246,20 @@ XtPointer	call_data)
 {
   float		xl, xu, yl, yu, X, Y;
 
-  if( globals.objHistogram == NULL ){
+  if( globals.objHistogram[globals.objIndx] == NULL ){
     return;
   }
 
   /* get the current graph scale limits and cursor position */
-  HGU_XmGetGraphLimits(globals.histogram, &xl, &xu, &yl, &yu);
-  HGU_XmGetHairCursor(globals.histogram, &X, &Y);
+  HGU_XmGetGraphLimits(globals.histogram[globals.objIndx], &xl, &xu, &yl, &yu);
+  HGU_XmGetHairCursor(globals.histogram[globals.objIndx], &X, &Y);
 
   /* reset scale */
   xl = 2.0 * xl - X;
   xu = 2.0 * xu - X;
   yl = 2.0 * yl - Y;
   yu = 2.0 * yu - Y;
-  HGU_XmSetGraphLimits(globals.histogram, xl, xu, yl, yu);
+  HGU_XmSetGraphLimits(globals.histogram[globals.objIndx], xl, xu, yl, yu);
 
   return;
 }
@@ -272,16 +273,16 @@ XtPointer	call_data)
   int		i;
   WlzHistogramDomain	*histDmn;
 
-  if( globals.objHistogram == NULL ){
+  if( globals.objHistogram[globals.objIndx] == NULL ){
     return;
   }
 
   /* reset scale */
-  xl = globals.srcMin;
-  xu = globals.srcMax;
+  xl = globals.srcMin[globals.objIndx];
+  xu = globals.srcMax[globals.objIndx];
   yl = 0.0;
   yu = 0.0;
-  histDmn = globals.objHistogram->domain.hist;
+  histDmn = globals.objHistogram[globals.objIndx]->domain.hist;
   switch( histDmn->type ){
   case WLZ_HISTOGRAMDOMAIN_INT:
     for(i=0; i < histDmn->nBins; i++){
@@ -299,54 +300,55 @@ XtPointer	call_data)
     }
     break;
   }
-  HGU_XmSetGraphLimits(globals.histogram, xl, xu, yl, yu);
+  HGU_XmSetGraphLimits(globals.histogram[globals.objIndx], xl, xu, yl, yu);
 
   return;
 }
 
-void setImageControls(void)
+void setImageControls(
+  int	indx)
 {
   Widget	slider, option, toggle, widget;
 
   /* reset the graph scale */
-  HGU_XmSetGraphLimits(globals.graph, (float) globals.srcMin,
-		       (float) globals.srcMax + 1,
+  HGU_XmSetGraphLimits(globals.graph, (float) globals.srcMin[indx],
+		       (float) globals.srcMax[indx] + 1,
 		       (float) 0, (float) 255);
 
   /* now reset the sliders */
   if( slider = XtNameToWidget(globals.imageDialog, "*src_grey_min") ){
-    HGU_XmSetSliderRange(slider, (float) globals.srcMin,
-			 (float) globals.srcMax);
-    HGU_XmSetSliderValue(slider, (float) globals.srcSliderMin);
+    HGU_XmSetSliderRange(slider, (float) globals.srcMin[indx],
+			 (float) globals.srcMax[indx]);
+    HGU_XmSetSliderValue(slider, (float) globals.srcSliderMin[indx]);
   }
   if( slider = XtNameToWidget(globals.imageDialog, "*src_grey_width") ){
     HGU_XmSetSliderRange(slider, (float) 0,
-			 (float) globals.srcMax);
-    HGU_XmSetSliderValue(slider, (float) globals.srcSliderWidth);
+			 (float) globals.srcMax[indx]);
+    HGU_XmSetSliderValue(slider, (float) globals.srcSliderWidth[indx]);
   }
   if( slider = XtNameToWidget(globals.imageDialog, "*dst_grey_min") ){
-    HGU_XmSetSliderValue(slider, (float) globals.dstSliderMin);
+    HGU_XmSetSliderValue(slider, (float) globals.dstSliderMin[indx]);
   }
   if( slider = XtNameToWidget(globals.imageDialog, "*dst_grey_max") ){
-    HGU_XmSetSliderValue(slider, (float) globals.dstSliderMax);
+    HGU_XmSetSliderValue(slider, (float) globals.dstSliderMax[indx]);
   }
   if( slider = XtNameToWidget(globals.imageDialog, "*gamma") ){
-    HGU_XmSetSliderValue(slider, (float) globals.gamma);
+    HGU_XmSetSliderValue(slider, (float) globals.gamma[indx]);
   }
   if( slider = XtNameToWidget(globals.imageDialog, "*mean") ){
-    HGU_XmSetSliderRange(slider, (float) globals.srcMin,
-			 (float) globals.srcMax);
-    HGU_XmSetSliderValue(slider, (float) globals.mean);
+    HGU_XmSetSliderRange(slider, (float) globals.srcMin[indx],
+			 (float) globals.srcMax[indx]);
+    HGU_XmSetSliderValue(slider, (float) globals.mean[indx]);
   }
   if( slider = XtNameToWidget(globals.imageDialog, "*sigma") ){
     HGU_XmSetSliderRange(slider, (float) 0,
-			 (float) globals.srcMax);
-    HGU_XmSetSliderValue(slider, (float) globals.sigma);
+			 (float) globals.srcMax[indx]);
+    HGU_XmSetSliderValue(slider, (float) globals.sigma[indx]);
   }
 
   /* reset the transform type and invert toggle */
   if( option = XtNameToWidget(globals.imageDialog, "*transformType") ){
-    switch( globals.transType ){
+    switch( globals.transType[indx] ){
     default:
     case WLZ_GREYTRANSFORMTYPE_LINEAR:
       widget = XtNameToWidget(option, "*linear");
@@ -365,27 +367,29 @@ void setImageControls(void)
     }
   }
   if( toggle = XtNameToWidget(globals.imageDialog, "*invert") ){
-    XtVaSetValues(toggle, XmNset, globals.invert, NULL);
+    XtVaSetValues(toggle, XmNset, globals.invert[indx], NULL);
   }
   
 
   /* re-display the transform graph */
-  setTransformDisplay();
+  setTransformDisplay(indx);
 
   return;
 }
 
-void resetImageControlValues(void)
+void resetImageControlValues(
+  int	indx)
 {
-  globals.srcSliderMin = WLZ_MAX(0, globals.srcMin);
-  globals.srcSliderWidth = WLZ_MIN(globals.srcMax - globals.srcMin, 4095);
-  globals.dstSliderMin = 0;
-  globals.dstSliderMax = 255;
-  globals.transType = WLZ_GREYTRANSFORMTYPE_LINEAR;
-  globals.gamma = 1.0;
-  globals.mean = globals.srcSliderMin + globals.srcSliderWidth/2;
-  globals.sigma = globals.srcSliderWidth/20;
-  globals.invert = 0;
+  globals.srcSliderMin[indx] = WLZ_MAX(0, globals.srcMin[indx]);
+  globals.srcSliderWidth[indx] = WLZ_MIN(globals.srcMax[indx] -
+					 globals.srcMin[indx], 4095);
+  globals.dstSliderMin[indx] = 0;
+  globals.dstSliderMax[indx] = 255;
+  globals.transType[indx] = WLZ_GREYTRANSFORMTYPE_LINEAR;
+  globals.gamma[indx] = 1.0;
+  globals.mean[indx] = globals.srcSliderMin[indx] + globals.srcSliderWidth[indx]/2;
+  globals.sigma[indx] = globals.srcSliderWidth[indx]/20;
+  globals.invert[indx] = 0;
 
   return;
 }
@@ -400,9 +404,9 @@ XtPointer	call_data)
   /* reset all the values
      leave type selection and invert alone
   */
-  resetImageControlValues();
-  setLutTransform();
-  setImageControls();
+  resetImageControlValues(0);
+  setLutTransform(0);
+  setImageControls(0);
 
   /* reset the transform lut and re-display image */
   if( globals.ximage ){
@@ -431,13 +435,13 @@ void setHistogramDisplayCb(
   WlzErrorNum	errNum=WLZ_ERR_NONE;
   Widget	widget;
 
-  if( (globals.obj == NULL) || globals.objHistogram ){
+  if( (globals.obj == NULL) || globals.objHistogram[globals.objIndx] ){
     return;
   }
 
   /* get max and min from globals */
-  min = globals.srcMin;
-  max = globals.srcMax;
+  min = globals.srcMin[globals.objIndx];
+  max = globals.srcMax[globals.objIndx];
   nBins = WLZ_MIN((max-min+1), 1024);
   binOrigin = min;
   binSize = ((double)(max - min)) / nBins;
@@ -447,15 +451,17 @@ void setHistogramDisplayCb(
     hist_polydmn = WlzMakePolygonDomain(WLZ_POLYGON_INT, 1024,
 					hist_vtx, 1024, 0, NULL);
   }
-  if( globals.objHistogram = WlzHistogramObj(globals.obj, nBins,
-					     binOrigin, binSize,
-					     &errNum) ){
-    globals.objHistogram = WlzAssignObject(globals.objHistogram, NULL);
-    switch( globals.objHistogram->domain.hist->type ){
+  if( globals.objHistogram[globals.objIndx] = WlzHistogramObj(globals.obj, nBins,
+							      binOrigin, binSize,
+							      &errNum) ){
+    globals.objHistogram[globals.objIndx] =
+      WlzAssignObject(globals.objHistogram[globals.objIndx], NULL);
+    switch( globals.objHistogram[globals.objIndx]->domain.hist->type ){
     case WLZ_HISTOGRAMDOMAIN_INT:
       for(i=0, nMax=0; i < nBins; i++){
 	hist_vtx[i].vtX = binOrigin + i * binSize;
-	hist_vtx[i].vtY = globals.objHistogram->domain.hist->binValues.inp[i];
+	hist_vtx[i].vtY =
+	  globals.objHistogram[globals.objIndx]->domain.hist->binValues.inp[i];
 	nMax = WLZ_MAX(nMax, hist_vtx[i].vtY);
       }
       break;
@@ -463,15 +469,17 @@ void setHistogramDisplayCb(
     case WLZ_HISTOGRAMDOMAIN_FLOAT:
       for(i=0, nMax=0; i < nBins; i++){
 	hist_vtx[i].vtX = binOrigin + i * binSize;
-	hist_vtx[i].vtY = globals.objHistogram->domain.hist->binValues.flp[i];
+	hist_vtx[i].vtY =
+	  globals.objHistogram[globals.objIndx]->domain.hist->binValues.flp[i];
 	nMax = WLZ_MAX(nMax, hist_vtx[i].vtY);
       }
       break;
     }
   }
-  HGU_XmSetGraphLimits(globals.histogram, (float) min, (float) max,
+  HGU_XmSetGraphLimits(globals.histogram[globals.objIndx],
+		       (float) min, (float) max,
 		       (float) 0, (float) nMax);
-  HGU_XmSetGraphPolyline(globals.histogram, hist_polydmn, 1);
+  HGU_XmSetGraphPolyline(globals.histogram[globals.objIndx], hist_polydmn, 1);
 
   return;
 }
@@ -479,16 +487,18 @@ void setHistogramDisplayCb(
 
 static WlzIVertex2	win_vtx[5], lut_vtx[256];
 static WlzPolygonDomain	*win_polydmn=NULL, *lut_polydmn=NULL;
-void setTransformDisplay(void)
+void setTransformDisplay(
+  int	indx)
 {
   int		i;
   double	g, A, B, fmin, fmax, mu, sig;
 
   /* display the transform window */
-  win_vtx[0].vtX = win_vtx[3].vtX = win_vtx[4].vtX = globals.srcSliderMin;
-  win_vtx[0].vtY = win_vtx[1].vtY = win_vtx[4].vtY = globals.dstSliderMin;
-  win_vtx[1].vtX = win_vtx[2].vtX = globals.srcSliderMin + globals.srcSliderWidth;
-  win_vtx[2].vtY = win_vtx[3].vtY = globals.dstSliderMax;
+  win_vtx[0].vtX = win_vtx[3].vtX = win_vtx[4].vtX = globals.srcSliderMin[indx];
+  win_vtx[0].vtY = win_vtx[1].vtY = win_vtx[4].vtY = globals.dstSliderMin[indx];
+  win_vtx[1].vtX = win_vtx[2].vtX = globals.srcSliderMin[indx] +
+    globals.srcSliderWidth[indx];
+  win_vtx[2].vtY = win_vtx[3].vtY = globals.dstSliderMax[indx];
   if( win_polydmn == NULL ){
     win_polydmn = WlzMakePolygonDomain(WLZ_POLYGON_INT, 5,
 				       win_vtx, 5, 0, NULL);
@@ -501,22 +511,22 @@ void setTransformDisplay(void)
 				       lut_vtx, 256, 0, NULL);
   }
 
-  lut_vtx[0].vtX = globals.srcMin;
-  lut_vtx[0].vtY = globals.dstSliderMin;
-  lut_vtx[1].vtX = globals.srcSliderMin;
-  lut_vtx[1].vtY = globals.dstSliderMin;
+  lut_vtx[0].vtX = globals.srcMin[indx];
+  lut_vtx[0].vtY = globals.dstSliderMin[indx];
+  lut_vtx[1].vtX = globals.srcSliderMin[indx];
+  lut_vtx[1].vtY = globals.dstSliderMin[indx];
   for(i=2; i < 200; i++){
-    g = globals.srcSliderMin + (i-2) * globals.srcSliderWidth / 198;
+    g = globals.srcSliderMin[indx] + (i-2) * globals.srcSliderWidth[indx] / 198;
     lut_vtx[i].vtX = (int) g;
-    lut_vtx[i].vtY = globals.lut[lut_vtx[i].vtX - globals.srcMin];
+    lut_vtx[i].vtY = globals.lut[indx][lut_vtx[i].vtX - globals.srcMin[indx]];
   }
-  lut_vtx[i].vtX = globals.srcSliderMin + globals.srcSliderWidth;
-  lut_vtx[i++].vtY = globals.dstSliderMax;
-  lut_vtx[i].vtX = globals.srcMax;
-  lut_vtx[i++].vtY = globals.dstSliderMax;
+  lut_vtx[i].vtX = globals.srcSliderMin[indx] + globals.srcSliderWidth[indx];
+  lut_vtx[i++].vtY = globals.dstSliderMax[indx];
+  lut_vtx[i].vtX = globals.srcMax[indx];
+  lut_vtx[i++].vtY = globals.dstSliderMax[indx];
   lut_polydmn->nvertices = i;
   
-  HGU_XmSetGraphPolyline(globals.graph, lut_polydmn, 2);
+  HGU_XmSetGraphPolyline(globals.graph, lut_polydmn, indx+2);
 
   return;
 }
@@ -526,8 +536,8 @@ void setTransformDisplayCb(
   XtPointer	client_data,
   XtPointer	call_data)
 {
-  setLutTransform();
-  setTransformDisplay();
+  setLutTransform(globals.objIndx);
+  setTransformDisplay(globals.objIndx);
 
   /* reset the transform lut and re-display image */
   if( globals.view_object ){
@@ -552,6 +562,7 @@ void srcSliderMinCb(
   XtPointer	call_data)
 {
   int		newval;
+  int		indx = globals.objIndx;
   Widget	slider = w;
 
   
@@ -562,11 +573,11 @@ void srcSliderMinCb(
   }
 
   newval = (int) HGU_XmGetSliderValue(slider);
-  if( (globals.srcSliderWidth + newval) > globals.srcMax ){
-    newval = globals.srcMax - globals.srcSliderWidth;
+  if( (globals.srcSliderWidth[indx] + newval) > globals.srcMax[indx] ){
+    newval = globals.srcMax[indx] - globals.srcSliderWidth[indx];
     HGU_XmSetSliderValue(slider, (float) newval);
   }
-  globals.srcSliderMin = newval;
+  globals.srcSliderMin[indx] = newval;
 
   setTransformDisplayCb(w, client_data, call_data);
 
@@ -579,6 +590,7 @@ void srcSliderWidthCb(
   XtPointer	call_data)
 {
   int		newval;
+  int		indx = globals.objIndx;
   Widget	slider = w;
 
   
@@ -589,11 +601,11 @@ void srcSliderWidthCb(
   }
 
   newval = (int) HGU_XmGetSliderValue(slider);
-  if( (globals.srcSliderMin + newval) > globals.srcMax ){
-    newval = globals.srcMax - globals.srcSliderMin;
+  if( (globals.srcSliderMin[indx] + newval) > globals.srcMax[indx] ){
+    newval = globals.srcMax[indx] - globals.srcSliderMin[indx];
     HGU_XmSetSliderValue(slider, (float) newval);
   }
-  globals.srcSliderWidth = newval;
+  globals.srcSliderWidth[indx] = newval;
 
   setTransformDisplayCb(w, client_data, call_data);
 
@@ -606,6 +618,7 @@ void dstSliderMinCb(
   XtPointer	call_data)
 {
   int		newval;
+  int		indx = globals.objIndx;
   Widget	slider = w;
 
   
@@ -616,11 +629,11 @@ void dstSliderMinCb(
   }
 
   newval = (int) HGU_XmGetSliderValue(slider);
-  if( newval > globals.dstSliderMax ){
-    newval = globals.dstSliderMax;
+  if( newval > globals.dstSliderMax[indx] ){
+    newval = globals.dstSliderMax[indx];
     HGU_XmSetSliderValue(slider, (float) newval);
   }
-  globals.dstSliderMin = newval;
+  globals.dstSliderMin[indx] = newval;
 
   setTransformDisplayCb(w, client_data, call_data);
 
@@ -633,6 +646,7 @@ void dstSliderMaxCb(
   XtPointer	call_data)
 {
   int		newval;
+  int		indx = globals.objIndx;
   Widget	slider = w;
 
   
@@ -643,11 +657,11 @@ void dstSliderMaxCb(
   }
 
   newval = (int) HGU_XmGetSliderValue(slider);
-  if( newval < globals.dstSliderMin ){
-    newval = globals.dstSliderMin;
+  if( newval < globals.dstSliderMin[indx] ){
+    newval = globals.dstSliderMin[indx];
     HGU_XmSetSliderValue(slider, (float) newval);
   }
-  globals.dstSliderMax = newval;
+  globals.dstSliderMax[indx] = newval;
 
   setTransformDisplayCb(w, client_data, call_data);
 
@@ -661,8 +675,9 @@ void invertTransCb(
 {
   XmToggleButtonCallbackStruct
     *cbs = (XmToggleButtonCallbackStruct *) call_data;
+  int		indx = globals.objIndx;
 
-  globals.invert = cbs->set;
+  globals.invert[indx] = cbs->set;
   setTransformDisplayCb(w, client_data, call_data);
   return;
 }
@@ -672,7 +687,7 @@ void transformTypeCb(
   XtPointer	client_data,
   XtPointer	call_data)
 {
-  globals.transType = (WlzGreyTransformType) client_data;
+  globals.transType[globals.objIndx] = (WlzGreyTransformType) client_data;
   setTransformDisplayCb(w, client_data, call_data);
   return;
 }
@@ -693,7 +708,7 @@ void gammaSetCb(
   }
 
   newval = (double) HGU_XmGetSliderValue(slider);
-  globals.gamma = newval;
+  globals.gamma[globals.objIndx] = newval;
 
   setTransformDisplayCb(w, client_data, call_data);
 
@@ -716,7 +731,7 @@ void meanSetCb(
   }
 
   newval = (double) HGU_XmGetSliderValue(slider);
-  globals.mean = newval;
+  globals.mean[globals.objIndx] = newval;
 
   setTransformDisplayCb(w, client_data, call_data);
 
@@ -739,7 +754,7 @@ void sigmaSetCb(
   }
 
   newval = (double) HGU_XmGetSliderValue(slider);
-  globals.sigma = newval;
+  globals.sigma[globals.objIndx] = newval;
 
   setTransformDisplayCb(w, client_data, call_data);
 
@@ -753,33 +768,34 @@ void setSourceRangeCb(
   int		setMaxFlg=(int)client_data;
   float		xVal, yVal;
   int		newMin, newMax;
+  int		indx = globals.objIndx;
   Widget	slider;
 
   if( globals.histogram ){
-    if( HGU_XmGetHairCursor(globals.histogram, &xVal, &yVal) ){
+    if( HGU_XmGetHairCursor(globals.histogram[indx], &xVal, &yVal) ){
       return;
     }
     if( setMaxFlg ){
       newMax = xVal;
-      newMin = globals.srcSliderMin;
+      newMin = globals.srcSliderMin[indx];
       if( newMax < newMin ){
 	newMin = newMax;
       }
     }
     else {
       newMin = xVal;
-      newMax = newMin + globals.srcSliderWidth;
-      newMax = WLZ_MIN(newMax, globals.srcMax);
+      newMax = newMin + globals.srcSliderWidth[indx];
+      newMax = WLZ_MIN(newMax, globals.srcMax[indx]);
     }
-    globals.srcSliderMin = newMin;
-    globals.srcSliderWidth = (newMax == newMin)? 1 : newMax - newMin;
+    globals.srcSliderMin[indx] = newMin;
+    globals.srcSliderWidth[indx] = (newMax == newMin)? 1 : newMax - newMin;
 
     /* now set min and width */
     if( slider = XtNameToWidget(globals.imageDialog, "*src_grey_min") ){
-      HGU_XmSetSliderValue(slider, (float) globals.srcSliderMin);
+      HGU_XmSetSliderValue(slider, (float) globals.srcSliderMin[indx]);
     }
     if( slider = XtNameToWidget(globals.imageDialog, "*src_grey_width") ){
-      HGU_XmSetSliderValue(slider, (float) globals.srcSliderWidth);
+      HGU_XmSetSliderValue(slider, (float) globals.srcSliderWidth[indx]);
     }
     setTransformDisplayCb(w, client_data, call_data);
   }
@@ -892,7 +908,7 @@ Widget	createImageControls(
 			     XtWindow(globals.topl));
   HGU_XmSetGraphLimits(graph, (float) 0, (float) 4095,
 		       (float) 0, (float) 255);
-  globals.histogram = graph;
+  globals.histogram[globals.objIndx] = graph;
   graphics = XtNameToWidget(graph, "*.graphics");
   XtAddCallback(graphics, XmNexposeCallback, setHistogramDisplayCb, dialog);
 
@@ -940,7 +956,7 @@ Widget	createImageControls(
   XtAddCallback(button, XmNvalueChangedCallback, invertTransCb, NULL);
 
   slider = HGU_XmCreateHorizontalSlider("gamma", form,
-					(float) globals.gamma, (float) 0.1,
+					(float) globals.gamma[0], (float) 0.1,
 					(float) 10.0, 2,
 					gammaSetCb, NULL);
   XtVaSetValues(slider,
@@ -956,9 +972,9 @@ Widget	createImageControls(
   widget = slider;
 
   slider = HGU_XmCreateHorizontalSlider("mean", form,
-					(float) globals.mean,
-					(float) globals.srcMin,
-					(float) globals.srcMax,
+					(float) globals.mean[0],
+					(float) globals.srcMin[0],
+					(float) globals.srcMax[0],
 					0,
 					meanSetCb, NULL);
   XtVaSetValues(slider,
@@ -973,8 +989,8 @@ Widget	createImageControls(
   XtAddCallback(scale, XmNdragCallback, meanSetCb, NULL);
 
   slider = HGU_XmCreateHorizontalSlider("sigma", form,
-					(float) globals.sigma, (float) 0.0,
-					(float) globals.srcMax,
+					(float) globals.sigma[0], (float) 0.0,
+					(float) globals.srcMax[0],
 					0,
 					sigmaSetCb, NULL);
   XtVaSetValues(slider,
@@ -1006,9 +1022,9 @@ Widget	createImageControls(
 				 frame, NULL);
 
   slider = HGU_XmCreateHorizontalSlider("src_grey_min", form,
-					(float) globals.srcSliderMin,
-					(float) globals.srcMin,
-					(float) globals.srcMax,
+					(float) globals.srcSliderMin[0],
+					(float) globals.srcMin[0],
+					(float) globals.srcMax[0],
 					0,
 					srcSliderMinCb, NULL);
   XtVaSetValues(slider,
@@ -1023,9 +1039,9 @@ Widget	createImageControls(
   XtAddCallback(scale, XmNdragCallback, srcSliderMinCb, NULL);
 
   slider = HGU_XmCreateHorizontalSlider("src_grey_width", form,
-					(float) globals.srcSliderWidth,
+					(float) globals.srcSliderWidth[0],
 					(float) 0.0,
-					(float) globals.srcMax,
+					(float) globals.srcMax[0],
 					0,
 					srcSliderWidthCb, NULL);
   XtVaSetValues(slider,
@@ -1039,7 +1055,7 @@ Widget	createImageControls(
   XtAddCallback(scale, XmNdragCallback, srcSliderWidthCb, NULL);
 
   slider = HGU_XmCreateHorizontalSlider("dst_grey_min", form,
-					(float) globals.dstSliderMin,
+					(float) globals.dstSliderMin[0],
 					(float) 0.0,
 					(float) 255.0, 0,
 					dstSliderMinCb, NULL);
@@ -1056,7 +1072,7 @@ Widget	createImageControls(
   
 
   slider = HGU_XmCreateHorizontalSlider("dst_grey_max", form,
-					(float) globals.dstSliderMax,
+					(float) globals.dstSliderMax[0],
 					(float) 0.0,
 					(float) 255.0, 0,
 					dstSliderMaxCb, NULL);
@@ -1090,7 +1106,8 @@ Widget	createImageControls(
 				  NULL);
   graph = HGU_XmCreateGraphD("transform_graph", frame, NULL,
 			     XtWindow(globals.topl));
-  HGU_XmSetGraphLimits(graph, (float) globals.srcMin, (float) globals.srcMax + 1,
+  HGU_XmSetGraphLimits(graph, (float) globals.srcMin[0],
+		       (float) globals.srcMax[0] + 1,
 		       (float) 0, (float) 255);
   globals.graph = graph;
   graphics = XtNameToWidget(graph, "*.graphics");
@@ -1107,26 +1124,32 @@ void image_menu_init(
   XmString	xmstr;
   Visual	*visual;
   Arg		arg[1];
+  int		i;
 
   /* initialise the globals */
   if(globals.obj == NULL){
     globals.imageDialog = NULL;
-    globals.objHistogram = NULL;
-    globals.histogram = NULL;
+    globals.objIndx = 0;
+    globals.histogram[0] = NULL;
+    globals.histogram[1] = NULL;
+    globals.histogram[2] = NULL;
     globals.graph = NULL;
-    globals.srcMin = 0;
-    globals.srcMax = 4095;
-    resetImageControlValues();
-    globals.transType = WLZ_GREYTRANSFORMTYPE_LINEAR;
-    globals.invert = 0;
-    globals.lut = (UBYTE *) AlcCalloc(0xffff, sizeof(char));
-    setLutTransform();
+    for(i=0; i < 3; i++){
+      globals.objHistogram[i] = NULL;
+      globals.srcMin[i] = 0;
+      globals.srcMax[i] = 4095;
+      globals.transType[i] = WLZ_GREYTRANSFORMTYPE_LINEAR;
+      globals.invert[i] = 0;
+      globals.gamma[i] = 1.0;
+      globals.lut[i] = (UBYTE *) AlcCalloc(0xffff, sizeof(char));
+    }
+    resetImageControlValues(0);
+    setLutTransform(0);
   }
 
   /* get the visual explicitly */
   visual = HGU_XmWidgetToVisual(topl);
   XtSetArg(arg[0], XmNvisual, visual);
-
 
   return;
 }

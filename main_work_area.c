@@ -104,6 +104,7 @@ XImage *HGU_XmObjToXImage(
   WlzGreyValueWSpace	*gVWSp = NULL;
   WlzErrorNum		errNum=WLZ_ERR_NONE;
   int			i, j;
+  int			indx=globals.objIndx;
 
   /* get window properties */
   if( XGetWindowAttributes(XtDisplayOfObject(w), XtWindowOfObject(w), &win_att) == 0 ){
@@ -135,13 +136,13 @@ XImage *HGU_XmObjToXImage(
 	  switch( gVWSp->gType ){
 	  default:
 	  case WLZ_GREY_INT:
-	    *data = globals.lut[(*(gVWSp->gPtr[0].inp))-globals.srcMin];
+	    *data = globals.lut[0][(*(gVWSp->gPtr[indx].inp))-globals.srcMin[indx]];
 	    break;
 	  case WLZ_GREY_SHORT:
-	    *data = globals.lut[(*(gVWSp->gPtr[0].shp))-globals.srcMin];
+	    *data = globals.lut[0][(*(gVWSp->gPtr[indx].shp))-globals.srcMin[indx]];
 	    break;
 	  case WLZ_GREY_UBYTE:
-	    *data = globals.lut[(*(gVWSp->gPtr[0].ubp))-globals.srcMin];
+	    *data = globals.lut[0][(*(gVWSp->gPtr[indx].ubp))-globals.srcMin[indx]];
 	    break;
 	  case WLZ_GREY_FLOAT:
 	    *data = *(gVWSp->gPtr[0].flp);

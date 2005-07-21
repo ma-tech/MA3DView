@@ -131,8 +131,10 @@ XtPointer	call_data)
     return;
 }
 
-void resetGreyRange(void)
+void resetGreyRange(
+  int	indx)
 {
+  WlzObject	*obj;
   WlzPixelV	greyMin, greyMax;
   int		min, max;
   WlzErrorNum	errNum=WLZ_ERR_NONE;
@@ -140,9 +142,20 @@ void resetGreyRange(void)
   if( globals.obj == NULL ){
     return;
   }
+  else {
+    switch( globals.obj->type ){
+    case WLZ_COMPOUND_ARR_1:
+    case WLZ_COMPOUND_ARR_2:
+      obj = ((WlzCompoundArray *) globals.obj)->o[indx];
+      break;
+
+    default:
+      obj = globals.obj;
+    }
+  }
 
   /* calculate the grey-range & reset the scale */
-  errNum = WlzGreyRange(globals.obj, &greyMin, &greyMax);
+  errNum = WlzGreyRange(obj, &greyMin, &greyMax);
   switch( greyMin.type ){
   case WLZ_GREY_LONG:
     min = greyMin.v.lnv;
@@ -189,16 +202,17 @@ void resetGreyRange(void)
     }
   }
 
-  globals.srcMin = min;
-  globals.srcMax = max;
-  if( globals.objHistogram ){
-    WlzFreeObj( globals.objHistogram );
-    globals.objHistogram = NULL;
+  globals.srcMin[indx] = min;
+  globals.srcMax[indx] = max;
+  if( globals.objHistogram[indx] ){
+    WlzFreeObj( globals.objHistogram[indx] );
+    globals.objHistogram[indx] = NULL;
   }
+  /* this is clearly never used!!!! RAB
   if( globals.histogram ){
     Widget graphics = XtNameToWidget(globals.histogram, "*.graphics");
     setHistogramDisplayCb(graphics, NULL, NULL);
-  }
+    }*/
 
   return;
 }
@@ -258,13 +272,13 @@ void install_reference_object(
 
 
   /* reset the histogram */
-  resetGreyRange();
+  resetGreyRange(0);
 
   /* reset the lut transform */
-  resetImageControlValues();
-  setLutTransform();
+  resetImageControlValues(0);
+  setLutTransform(0);
   if( globals.imageDialog ){
-    setImageControls();
+    setImageControls(0);
   }
 
   /* reset view to x-y */
