@@ -14,23 +14,6 @@
 include			../../Makefile.conf
 
 # local mods to Makefile.conf defaults
-OPENGLHOME		= /opt/Mesa
-OPENGL_INC_DIR          = $(OPENGLHOME)/include
-OPENGL_LIB_DIR		= $(OPENGLHOME)/lib
-ifeq ($(UNIXTYPE), DARWIN)
-OPENGLHOME		= /usr/X11R6
-OPENGL_INC_DIR          = $(OPENGLHOME)/include
-OPENGL_LIB_DIR		= $(OPENGLHOME)/lib
-endif
-ifeq ($(UNIXTYPE), IRIX5)
-OPENGL_LIB_DIR		= $(OPENGLHOME)/lib.32
-endif
-ifeq ($(UNIXTYPE), IRIX6)
-OPENGL_LIB_DIR		= $(OPENGLHOME)/lib.n32
-endif
-ifeq ($(UNIXTYPE), IRIX646)
-OPENGL_LIB_DIR		= $(OPENGLHOME)/lib64
-endif
 
 # Names of executables to be built (modify as required).
 EXECUTABLES		= MA3DView
@@ -96,24 +79,6 @@ INCDIRS			= .  \
 			  $(X11_INC_DIR) \
 			  $(MOTIF_INC_DIR) \
 			/opt/local/include
-ifeq ($(UNIXTYPE), DARWIN)
-INCDIRS			= .  \
-			../../Core/libAlc \
-			../../Core/libbibfile \
-			../../Core/libAlg \
-			../../Core/libWlz \
-			../../Core/libWlzExtFF \
-			../../Core/libhguDlpList \
-			../../HGUX/libHguX \
-			../../HGUX/libHguXm \
-			../../HGUX/libhguGL \
-			../../External/Tiff/tiff-v3.5.7/libtiff \
-			../../External/Jpeg/jpeg-6b \
-			  $(HGU_INC_DIR) \
-			  $(OPENGL_INC_DIR) \
-			  $(X11_INC_DIR) \
-			  $(MOTIF_INC_DIR)
-endif
 
 # List of library search paths (modify as required).
 ifeq ($(UNIXTYPE), IRIX5)
@@ -188,7 +153,6 @@ LIBDIRS			= \
 endif
 ifeq ($(UNIXTYPE), DARWIN)
 LIBDIRS			= \
-			$(SYSLIB) \
 			../../Core/libAlc \
 			../../Core/libbibfile \
 			../../Core/libAlg \
@@ -200,12 +164,10 @@ LIBDIRS			= \
 			../../HGUX/libhguGL \
 			../../External/Tiff/tiff-v3.5.7/libtiff \
 			../../External/Jpeg/jpeg-6b \
-			/Users/richard/downloads/darwin-extras/langinfo \
 			$(HGU_LIB_DIR) \
-			$(OPENGL_LIB_DIR) \
-			$(X11_LIB_DIR) \
 			$(MOTIF_LIB_DIR) \
-			/opt/local/lib
+			$(OPENGL_LIB_DIR) \
+			$(X11_LIB_DIR)
 endif
 
 # List of all sub directories that contain makefiles. The subsystems will be
@@ -239,8 +201,8 @@ EXTRA_LIBS		= tiff jpeg m Xp SM ICE
 X11LIBS         	= Xt Xmu X11 Xext
 endif
 ifeq	 	($(UNIXTYPE), DARWIN)
-EXTRA_LIBS		= langinfo tiff jpeg m
-X11LIBS         	= Xt Xmu X11 Xp Xext
+EXTRA_LIBS		= tiff jpeg m
+X11LIBS         	= Xt X11 Xmu Xp
 endif
 
 OPENGLLIBS		= GLU GL
