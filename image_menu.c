@@ -121,7 +121,7 @@ void setLutTransform(
 
   }
 
-  if( globals.invert ){
+  if( globals.invert[indx] ){
     for(; i >0;){
       i--;
       globals.lut[indx][i] = (globals.dstSliderMax[indx] + 
