@@ -1141,7 +1141,7 @@ void image_menu_init(
       globals.transType[i] = WLZ_GREYTRANSFORMTYPE_LINEAR;
       globals.invert[i] = 0;
       globals.gamma[i] = 1.0;
-      globals.lut[i] = (UBYTE *) AlcCalloc(0xffff, sizeof(char));
+      globals.lut[i] = (WlzUByte *) AlcCalloc(0xffff, sizeof(char));
     }
     resetImageControlValues(0);
     setLutTransform(0);
