@@ -167,7 +167,8 @@ LIBDIRS			= \
 			$(HGU_LIB_DIR) \
 			$(MOTIF_LIB_DIR) \
 			$(OPENGL_LIB_DIR) \
-			$(X11_LIB_DIR)
+			$(X11_LIB_DIR) \
+			/opt/local/lib
 endif
 
 # List of all sub directories that contain makefiles. The subsystems will be
