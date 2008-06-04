@@ -83,12 +83,12 @@ INCDIRS			= .  \
 # List of library search paths (modify as required).
 ifeq ($(UNIXTYPE), IRIX5)
 LIBDIRS			= \
-			../../Core/libAlc \
-			../../Core/libbibfile \
-			../../Core/libAlg \
-			../../Core/libWlz \
-			../../Core/libWlzExtFF \
-			../../Core/libhguDlpList \
+			../../Core/libAlc/.libs \
+			../../Core/libbibfile/.libs \
+			../../Core/libAlg/.libs \
+			../../Core/libWlz/.libs \
+			../../Core/libWlzExtFF/.libs \
+			../../Core/libhguDlpList/.libs \
 			../../HGUX/libHguX \
 			../../HGUX/libHguXm \
 			../../HGUX/libhguGL \
@@ -101,12 +101,12 @@ LIBDIRS			= \
 else
 LIBDIRS			= \
 			$(SYSLIB) \
-			../../Core/libAlc \
-			../../Core/libbibfile \
-			../../Core/libAlg \
-			../../Core/libWlz \
-			../../Core/libWlzExtFF \
-			../../Core/libhguDlpList \
+			../../Core/libAlc/.libs \
+			../../Core/libbibfile/.libs \
+			../../Core/libAlg/.libs \
+			../../Core/libWlz/.libs \
+			../../Core/libWlzExtFF/.libs \
+			../../Core/libhguDlpList/.libs \
 			../../HGUX/libHguX \
 			../../HGUX/libHguXm \
 			../../HGUX/libhguGL \
@@ -121,12 +121,12 @@ LIBDIRS			= \
 endif
 ifeq ($(UNIXTYPE), IRIX646)
 LIBDIRS			= \
-			../../Core/libAlc \
-			../../Core/libbibfile \
-			../../Core/libAlg \
-			../../Core/libWlz \
-			../../Core/libWlzExtFF \
-			../../Core/libhguDlpList \
+			../../Core/libAlc/.libs \
+			../../Core/libbibfile/.libs \
+			../../Core/libAlg/.libs \
+			../../Core/libWlz/.libs \
+			../../Core/libWlzExtFF/.libs \
+			../../Core/libhguDlpList/.libs \
 			../../HGUX/libHguX \
 			../../HGUX/libHguXm \
 			../../HGUX/libhguGL \
@@ -137,12 +137,12 @@ LIBDIRS			= \
 endif
 ifeq ($(UNIXTYPE), IRIX6)
 LIBDIRS			= \
-			../../Core/libAlc \
-			../../Core/libbibfile \
-			../../Core/libAlg \
-			../../Core/libWlz \
-			../../Core/libWlzExtFF \
-			../../Core/libhguDlpList \
+			../../Core/libAlc/.libs \
+			../../Core/libbibfile/.libs \
+			../../Core/libAlg/.libs \
+			../../Core/libWlz/.libs \
+			../../Core/libWlzExtFF/.libs \
+			../../Core/libhguDlpList/.libs \
 			../../HGUX/libHguX \
 			../../HGUX/libHguXm \
 			../../HGUX/libhguGL \
@@ -153,12 +153,12 @@ LIBDIRS			= \
 endif
 ifeq ($(UNIXTYPE), DARWIN)
 LIBDIRS			= \
-			../../Core/libAlc \
-			../../Core/libbibfile \
-			../../Core/libAlg \
-			../../Core/libWlz \
-			../../Core/libWlzExtFF \
-			../../Core/libhguDlpList \
+			../../Core/libAlc/.libs \
+			../../Core/libbibfile/.libs \
+			../../Core/libAlg/.libs \
+			../../Core/libWlz/.libs \
+			../../Core/libWlzExtFF/.libs \
+			../../Core/libhguDlpList/.libs \
 			../../HGUX/libHguX \
 			../../HGUX/libHguXm \
 			../../HGUX/libhguGL \
