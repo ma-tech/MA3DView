@@ -1,0 +1,5 @@
+MA3DView is an application to review a 3D voxel image,s adjust the grey-level
+histogram and to crop the volume. Typically it wass used as part of the
+normalising process for Optical Project Tomography (OPT) images which may
+need grey-level re-mapping. The application uses Motif and is known to build
+on Linux and OSX systems.
