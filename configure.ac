@@ -476,12 +476,12 @@ then
 		    AC_CHECK_LIB(GL, glBegin,
 				 [
 				   HAVE_GL=yes
-				   LIBS_GL="-lGLU -lGL"
+				   LIBS_GL="-dynamic -lGLU -lGL -static"
 				 ]))
   else
     HAVE_GL="yes"
     INCL_GL="-I${OPENGL_DIR}/include"
-    LIBS_GL="-L${OPENGL_DIR}/lib -lGLU -lGL"
+    LIBS_GL="-L${OPENGL_DIR}/lib -dynamic -lGLU -lGL -static"
   fi
 else
   HAVE_GL="yes"
@@ -552,12 +552,12 @@ then
   else
     HAVE_TIF="yes"
     INCL_TIF="-I${TIFF_DIR}/include"
-    LIBS_TIF="-L${TIFF_DIR}/lib -ltiff"
+    LIBS_TIF="-L${TIFF_DIR}/lib -ltiff -llzma"
   fi
 else
   HAVE_TIF="yes"
   INCL_TIF="-I${TIFF_DIR}/include"
-  LIBS_TIF="${TIFF_DIR}/lib/libtiff.a"
+  LIBS_TIF="${TIFF_DIR}/lib/libtiff.a -llzma"
 fi
 if test ${HAVE_TIF} = "yes"
 then
